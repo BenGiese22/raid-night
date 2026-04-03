@@ -329,7 +329,7 @@ export const tileMarks = pgTable(
     markedAt: timestamptz('marked_at').notNull().defaultNow(),
   },
   (t) => ({
-    uniq: unique().on(t.playerId, t.tileIndex),
+    uniq: unique().on(t.sessionId, t.playerId, t.tileIndex),
   }),
 )
 
@@ -489,6 +489,7 @@ NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=     # Server-side only (API routes)
 POSTGRES_URL=                  # Direct Postgres URL for Drizzle (Vercel Supabase integration)
+CRON_SECRET=                   # Vercel Cron auth token (secures /api/cron/* routes)
 ```
 
 The Vercel Supabase integration provides `POSTGRES_URL` (not `DATABASE_URL`). Both Drizzle config and `src/db/index.ts` accept either. Never expose `SUPABASE_SERVICE_ROLE_KEY` or `POSTGRES_URL` to the client. Any variable without `NEXT_PUBLIC_` prefix is server-only.

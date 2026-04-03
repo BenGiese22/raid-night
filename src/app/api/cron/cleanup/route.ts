@@ -15,12 +15,17 @@ export async function GET(request: Request): Promise<NextResponse> {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000)
+  try {
+    const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000)
 
-  const result = await db
-    .delete(sessions)
-    .where(lt(sessions.lastActivityAt, twoHoursAgo))
-    .returning({ id: sessions.id })
+    const result = await db
+      .delete(sessions)
+      .where(lt(sessions.lastActivityAt, twoHoursAgo))
+      .returning({ id: sessions.id })
 
-  return NextResponse.json({ deleted: result.length })
+    return NextResponse.json({ deleted: result.length })
+  } catch (error) {
+    console.error('cleanup cron failed:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
 }

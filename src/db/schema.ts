@@ -74,7 +74,7 @@ export const tileMarks = pgTable(
     phrase: text('phrase').notNull(),
     markedAt: timestamp('marked_at', { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [unique().on(t.playerId, t.tileIndex)],
+  (t) => [unique().on(t.sessionId, t.playerId, t.tileIndex)],
 )
 
 /**

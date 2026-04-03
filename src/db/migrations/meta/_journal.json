@@ -8,6 +8,13 @@
       "when": 1775234191883,
       "tag": "0000_brief_miss_america",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1775235659376,
+      "tag": "0001_cooing_mac_gargan",
+      "breakpoints": true
     }
   ]
 }

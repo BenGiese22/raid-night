@@ -1,0 +1,2 @@
+ALTER TABLE "tile_marks" DROP CONSTRAINT "tile_marks_player_id_tile_index_unique";--> statement-breakpoint
+ALTER TABLE "tile_marks" ADD CONSTRAINT "tile_marks_session_id_player_id_tile_index_unique" UNIQUE("session_id","player_id","tile_index");

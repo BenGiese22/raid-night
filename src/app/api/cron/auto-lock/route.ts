@@ -3,6 +3,7 @@ import { and, eq, isNotNull, lte } from 'drizzle-orm'
 
 import { db } from '@/db'
 import { phraseSubmissions, sessions } from '@/db/schema'
+import { SessionStatus } from '@/types/enums'
 
 /**
  * Auto-lock sessions past their scheduled lock time.
@@ -15,41 +16,46 @@ export async function GET(request: Request): Promise<NextResponse> {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const now = new Date()
+  try {
+    const now = new Date()
 
-  const sessionsToLock = await db
-    .select({ id: sessions.id })
-    .from(sessions)
-    .where(
-      and(
-        eq(sessions.status, 'collecting'),
-        isNotNull(sessions.scheduledLockAt),
-        lte(sessions.scheduledLockAt, now),
-      ),
-    )
+    const sessionsToLock = await db
+      .select({ id: sessions.id })
+      .from(sessions)
+      .where(
+        and(
+          eq(sessions.status, SessionStatus.Collecting),
+          isNotNull(sessions.scheduledLockAt),
+          lte(sessions.scheduledLockAt, now),
+        ),
+      )
 
-  let lockedCount = 0
+    let lockedCount = 0
 
-  for (const session of sessionsToLock) {
-    const submissions = await db
-      .select({ phrase: phraseSubmissions.phrase })
-      .from(phraseSubmissions)
-      .where(eq(phraseSubmissions.sessionId, session.id))
+    for (const session of sessionsToLock) {
+      const submissions = await db
+        .select({ phrase: phraseSubmissions.phrase })
+        .from(phraseSubmissions)
+        .where(eq(phraseSubmissions.sessionId, session.id))
 
-    const phrasePool = submissions.map((s) => s.phrase)
+      const phrasePool = submissions.map((s) => s.phrase)
 
-    await db
-      .update(sessions)
-      .set({
-        status: 'locked',
-        lockedAt: now,
-        phrasePool,
-        lastActivityAt: now,
-      })
-      .where(eq(sessions.id, session.id))
+      await db
+        .update(sessions)
+        .set({
+          status: SessionStatus.Locked,
+          lockedAt: now,
+          phrasePool,
+          lastActivityAt: now,
+        })
+        .where(eq(sessions.id, session.id))
 
-    lockedCount++
+      lockedCount++
+    }
+
+    return NextResponse.json({ locked: lockedCount })
+  } catch (error) {
+    console.error('auto-lock cron failed:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
-
-  return NextResponse.json({ locked: lockedCount })
 }

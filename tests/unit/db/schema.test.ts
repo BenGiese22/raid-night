@@ -78,10 +78,10 @@ describe('tileMarks table', () => {
     expect(config.name).toBe('tile_marks')
   })
 
-  it('has a composite unique constraint on (player_id, tile_index)', () => {
+  it('has a composite unique constraint on (session_id, player_id, tile_index)', () => {
     expect(config.uniqueConstraints.length).toBeGreaterThanOrEqual(1)
     const cols = config.uniqueConstraints[0]?.columns.map((c) => c.name)
-    expect(cols).toEqual(expect.arrayContaining(['player_id', 'tile_index']))
+    expect(cols).toEqual(expect.arrayContaining(['session_id', 'player_id', 'tile_index']))
   })
 })
 
