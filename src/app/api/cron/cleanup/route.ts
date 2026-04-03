@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server'
-import { lt } from 'drizzle-orm'
+import { and, isNull, lt, or } from 'drizzle-orm'
 
 import { db } from '@/db'
 import { sessions } from '@/db/schema'
 
 /**
  * Delete sessions inactive for more than 2 hours.
+ * Skips sessions with a future scheduledLockAt — they are intentionally waiting.
  * CASCADE foreign keys automatically remove all child records.
  * Called by Vercel Cron every 30 minutes.
  */
@@ -16,11 +17,18 @@ export async function GET(request: Request): Promise<NextResponse> {
   }
 
   try {
-    const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000)
+    const now = new Date()
+    const twoHoursAgo = new Date(now.getTime() - 2 * 60 * 60 * 1000)
 
     const result = await db
       .delete(sessions)
-      .where(lt(sessions.lastActivityAt, twoHoursAgo))
+      .where(
+        and(
+          lt(sessions.lastActivityAt, twoHoursAgo),
+          // Don't delete sessions with a future scheduled lock — they're waiting for players
+          or(isNull(sessions.scheduledLockAt), lt(sessions.scheduledLockAt, now)),
+        ),
+      )
       .returning({ id: sessions.id })
 
     return NextResponse.json({ deleted: result.length })

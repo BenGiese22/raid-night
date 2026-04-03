@@ -1,8 +1,9 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useState } from 'react'
 import type { FormEvent } from 'react'
 
+import { DateTimePicker } from '@/components/ui/DateTimePicker'
 import { SubmissionVisibility } from '@/types/enums'
 
 interface SessionResult {
@@ -22,10 +23,6 @@ export default function HomePage() {
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<SessionResult | null>(null)
   const [copied, setCopied] = useState(false)
-  const datetimeRef = useRef<HTMLInputElement>(null)
-
-  // Detect user's timezone for display
-  const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
@@ -86,12 +83,6 @@ export default function HomePage() {
     )
   }
 
-  // Minimum datetime for the scheduled lock input (now, in local format)
-  const now = new Date()
-  const minDatetime = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
-    .toISOString()
-    .slice(0, 16)
-
   return (
     <main className="min-h-screen bg-gray-950 text-gray-100">
       <div className="mx-auto max-w-md px-4 pt-20">
@@ -142,45 +133,7 @@ export default function HomePage() {
             </fieldset>
 
             {/* Scheduled lock datetime */}
-            <div>
-              <div className="mb-2 flex items-center justify-between">
-                <label htmlFor="scheduledLockAt" className="text-sm font-medium text-gray-400">
-                  Auto-lock at
-                </label>
-                {scheduledLockAt && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setScheduledLockAt('')
-                    }}
-                    className="text-xs text-gray-500 hover:text-gray-300"
-                  >
-                    Clear
-                  </button>
-                )}
-              </div>
-              {/* Click anywhere on the input area to open the picker */}
-              <div
-                className="relative cursor-pointer"
-                onClick={() => {
-                  datetimeRef.current?.showPicker()
-                }}
-              >
-                <input
-                  ref={datetimeRef}
-                  id="scheduledLockAt"
-                  type="datetime-local"
-                  value={scheduledLockAt}
-                  min={minDatetime}
-                  step="60"
-                  onChange={(e) => {
-                    setScheduledLockAt(e.target.value)
-                  }}
-                  className="w-full cursor-pointer rounded-lg border border-gray-700 bg-gray-900 px-4 py-2 text-gray-100 focus:border-indigo-500 focus:outline-none"
-                />
-              </div>
-              <p className="mt-1 text-xs text-gray-500">Timezone: {userTimezone}</p>
-            </div>
+            <DateTimePicker value={scheduledLockAt} onChange={setScheduledLockAt} />
 
             {/* Error message */}
             {error && (

@@ -6,6 +6,8 @@ import { generateSessionCode } from '@/lib/session'
 import { SessionStatus, SubmissionVisibility } from '@/types/enums'
 
 const MAX_RETRIES = 3
+const MIN_LOCK_DELAY_MS = 5 * 60 * 1000 // 5 minutes
+const MAX_LOCK_DELAY_MS = 24 * 60 * 60 * 1000 // 24 hours
 
 const VALID_VISIBILITY = new Set<string>([SubmissionVisibility.Open, SubmissionVisibility.Blind])
 
@@ -41,8 +43,12 @@ function parseBody(body: unknown): CreateSessionBody | string {
     if (isNaN(date.getTime())) {
       return 'scheduledLockAt must be a valid datetime'
     }
-    if (date.getTime() <= Date.now()) {
-      return 'scheduledLockAt must be in the future'
+    const delayMs = date.getTime() - Date.now()
+    if (delayMs < MIN_LOCK_DELAY_MS) {
+      return 'scheduledLockAt must be at least 5 minutes in the future'
+    }
+    if (delayMs > MAX_LOCK_DELAY_MS) {
+      return 'scheduledLockAt must be within 24 hours'
     }
   }
 
