@@ -41,6 +41,11 @@ raid-night/
 │   │   ├── [code]/
 │   │   │   └── page.tsx              # Player board page
 │   │   └── api/
+│   │       ├── cron/
+│   │       │   ├── auto-lock/
+│   │       │   │   └── route.ts      # GET /api/cron/auto-lock (Vercel Cron)
+│   │       │   └── cleanup/
+│   │       │       └── route.ts      # GET /api/cron/cleanup (Vercel Cron)
 │   │       └── sessions/
 │   │           └── route.ts          # POST /api/sessions
 │   ├── components/
@@ -264,9 +269,14 @@ NODE_TLS_REJECT_UNAUTHORIZED=0 npm run db:push
 
 This is only needed in local development — Vercel deployments handle SSL natively.
 
-### pg_cron Jobs (Supabase SQL Editor Only)
+### Cron Jobs (Vercel Cron)
 
-The `cron` schema requires superuser access. Cron job SQL (`src/db/sql/cron-jobs.sql`) must be applied via the **Supabase Dashboard → SQL Editor**. All other SQL files can be applied via the direct Postgres connection.
+Scheduled tasks use Vercel Cron + API routes instead of pg_cron (avoids superuser access requirement):
+
+- `GET /api/cron/auto-lock` — every 5 min, locks sessions past `scheduled_lock_at`
+- `GET /api/cron/cleanup` — every 30 min, deletes sessions inactive > 2 hours
+
+Both routes are secured with `CRON_SECRET` (set in Vercel environment variables). Schedules are defined in `vercel.json`.
 
 ---
 
