@@ -67,3 +67,21 @@ export function generateBoard(
 
   return pool.slice(0, 25)
 }
+
+/**
+ * Gets or creates a persistent anonymous player ID for a given session.
+ * The ID is stored in localStorage and reused across page reloads.
+ *
+ * @param sessionCode - Human-readable session identifier
+ * @returns UUID string identifying the player within this session
+ */
+export function getOrCreatePlayerId(sessionCode: string): string {
+  const key = `player_${sessionCode}`
+  const existing = localStorage.getItem(key)
+  if (existing) {
+    return existing
+  }
+  const id = crypto.randomUUID()
+  localStorage.setItem(key, id)
+  return id
+}

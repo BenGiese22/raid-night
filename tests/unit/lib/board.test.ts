@@ -1,6 +1,6 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { detectBingo, generateBoard } from '@/lib/board'
+import { detectBingo, generateBoard, getOrCreatePlayerId } from '@/lib/board'
 import { BingoPattern } from '@/types/enums'
 
 const PHRASE_POOL: readonly string[] = Array.from(
@@ -82,5 +82,54 @@ describe('detectBingo', () => {
   it('handles extra marked tiles beyond a pattern', () => {
     const allTiles = Array.from({ length: 25 }, (_, i) => i)
     expect(detectBingo(allTiles)).toBe(BingoPattern.Row0)
+  })
+})
+
+describe('getOrCreatePlayerId', () => {
+  const store = new Map<string, string>()
+
+  beforeEach(() => {
+    store.clear()
+    vi.stubGlobal('localStorage', {
+      getItem: (key: string) => store.get(key) ?? null,
+      setItem: (key: string, value: string) => {
+        store.set(key, value)
+      },
+      // eslint-disable-next-line drizzle/enforce-delete-with-where
+      removeItem: (key: string) => {
+        store.delete(key)
+      },
+      clear: () => {
+        store.clear()
+      },
+      get length() {
+        return store.size
+      },
+      key: () => null,
+    })
+    const originalRandomUUID = globalThis.crypto.randomUUID.bind(globalThis.crypto)
+    vi.stubGlobal('crypto', { randomUUID: () => originalRandomUUID() })
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('creates a new UUID on first call', () => {
+    const id = getOrCreatePlayerId('test-session')
+    expect(id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/)
+    expect(store.get('player_test-session')).toBe(id)
+  })
+
+  it('returns the same UUID on subsequent calls', () => {
+    const first = getOrCreatePlayerId('test-session')
+    const second = getOrCreatePlayerId('test-session')
+    expect(first).toBe(second)
+  })
+
+  it('returns different UUIDs for different sessions', () => {
+    const idA = getOrCreatePlayerId('session-a')
+    const idB = getOrCreatePlayerId('session-b')
+    expect(idA).not.toBe(idB)
   })
 })
