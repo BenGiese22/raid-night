@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 
 import { SubmissionVisibility } from '@/types/enums'
@@ -22,6 +22,10 @@ export default function HomePage() {
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<SessionResult | null>(null)
   const [copied, setCopied] = useState(false)
+  const datetimeRef = useRef<HTMLInputElement>(null)
+
+  // Detect user's timezone for display
+  const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
@@ -155,16 +159,27 @@ export default function HomePage() {
                   </button>
                 )}
               </div>
-              <input
-                id="scheduledLockAt"
-                type="datetime-local"
-                value={scheduledLockAt}
-                min={minDatetime}
-                onChange={(e) => {
-                  setScheduledLockAt(e.target.value)
+              {/* Click anywhere on the input area to open the picker */}
+              <div
+                className="relative cursor-pointer"
+                onClick={() => {
+                  datetimeRef.current?.showPicker()
                 }}
-                className="w-full rounded-lg border border-gray-700 bg-gray-900 px-4 py-2 text-gray-100 focus:border-indigo-500 focus:outline-none"
-              />
+              >
+                <input
+                  ref={datetimeRef}
+                  id="scheduledLockAt"
+                  type="datetime-local"
+                  value={scheduledLockAt}
+                  min={minDatetime}
+                  step="60"
+                  onChange={(e) => {
+                    setScheduledLockAt(e.target.value)
+                  }}
+                  className="w-full cursor-pointer rounded-lg border border-gray-700 bg-gray-900 px-4 py-2 text-gray-100 focus:border-indigo-500 focus:outline-none"
+                />
+              </div>
+              <p className="mt-1 text-xs text-gray-500">Timezone: {userTimezone}</p>
             </div>
 
             {/* Error message */}

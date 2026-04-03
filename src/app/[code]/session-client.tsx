@@ -22,8 +22,13 @@ export function SessionClient(props: SessionPageData) {
     setPlayerId(getOrCreatePlayerId(props.code))
   }, [props.code])
 
-  // Subscribe to session status changes
+  // Subscribe to session status changes, then refetch to catch SSR-to-hydration gap
   useEffect(() => {
+    function handleLocked(pool: readonly string[]) {
+      setStatus(SessionStatus.Locked)
+      setPhrasePool(pool)
+    }
+
     const channel = supabase
       .channel(`session-status:${props.id}`)
       .on(
@@ -37,14 +42,30 @@ export function SessionClient(props: SessionPageData) {
         (payload) => {
           const newRecord = payload.new as Record<string, unknown>
           if (newRecord.status === SessionStatus.Locked) {
-            setStatus(SessionStatus.Locked)
-            if (Array.isArray(newRecord.phrase_pool)) {
-              setPhrasePool(newRecord.phrase_pool as string[])
-            }
+            const pool = Array.isArray(newRecord.phrase_pool)
+              ? (newRecord.phrase_pool as string[])
+              : []
+            handleLocked(pool)
           }
         },
       )
-      .subscribe()
+      .subscribe((_subStatus, err) => {
+        if (err) return
+        // Refetch current status to catch transitions during SSR→hydration gap
+        void supabase
+          .from('sessions')
+          .select('status, phrase_pool')
+          .eq('id', props.id)
+          .single()
+          .then(({ data }) => {
+            if (!data) return
+            const row = data as Record<string, unknown>
+            if (row.status === SessionStatus.Locked) {
+              const pool = Array.isArray(row.phrase_pool) ? (row.phrase_pool as string[]) : []
+              handleLocked(pool)
+            }
+          })
+      })
 
     return () => {
       void supabase.removeChannel(channel)

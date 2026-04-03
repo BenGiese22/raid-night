@@ -28,26 +28,14 @@ export function CollectionView({
   scheduledLockAt,
 }: CollectionViewProps) {
   const [phrases, setPhrases] = useState<string[]>([])
-  const [phraseCount, setPhraseCount] = useState(0)
   const [inputValue, setInputValue] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  useEffect(() => {
-    // Fetch existing submissions
-    void supabase
-      .from('phrase_submissions')
-      .select('phrase')
-      .eq('session_id', sessionId)
-      .order('submitted_at', { ascending: true })
-      .then(({ data }) => {
-        if (data) {
-          const existing = data.map((row) => (row as { phrase: string }).phrase)
-          setPhrases(existing)
-          setPhraseCount(existing.length)
-        }
-      })
+  // Derived count — single source of truth prevents drift
+  const phraseCount = phrases.length
 
-    // Subscribe to new submissions
+  useEffect(() => {
+    // Subscribe first, then fetch — prevents missing inserts between fetch and subscription
     const channel = supabase
       .channel(`phrases:${sessionId}`)
       .on(
@@ -60,18 +48,32 @@ export function CollectionView({
         },
         (payload) => {
           const newRecord = payload.new as Record<string, unknown>
-          const rawPhrase = newRecord.phrase
-          const phrase = typeof rawPhrase === 'string' ? rawPhrase : ''
+          const phrase = typeof newRecord.phrase === 'string' ? newRecord.phrase : ''
           if (phrase) {
             setPhrases((prev) => {
               if (prev.includes(phrase)) return prev
               return [...prev, phrase]
             })
-            setPhraseCount((prev) => prev + 1)
           }
         },
       )
-      .subscribe()
+      .subscribe((_status, err) => {
+        if (err) {
+          console.error('phrase subscription error:', err)
+          return
+        }
+        // Fetch after subscription is active — dedup in setPhrases handles overlap
+        void supabase
+          .from('phrase_submissions')
+          .select('phrase')
+          .eq('session_id', sessionId)
+          .order('submitted_at', { ascending: true })
+          .then(({ data }) => {
+            if (data) {
+              setPhrases(data.map((row) => (row as { phrase: string }).phrase))
+            }
+          })
+      })
 
     return () => {
       void supabase.removeChannel(channel)
@@ -115,7 +117,11 @@ export function CollectionView({
         }}
         className="flex gap-2"
       >
+        <label htmlFor="phrase-input" className="sr-only">
+          Enter a bingo phrase
+        </label>
         <input
+          id="phrase-input"
           type="text"
           value={inputValue}
           onChange={(e) => {
