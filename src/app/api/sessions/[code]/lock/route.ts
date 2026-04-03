@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { eq } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 
 import { db } from '@/db'
 import { phraseSubmissions, sessions } from '@/db/schema'
@@ -8,6 +8,7 @@ import { SessionStatus } from '@/types/enums'
 /**
  * Manually locks a session. Copies all phrase submissions into the session's
  * phrase pool and transitions status to locked.
+ * Uses optimistic locking (WHERE status = 'collecting') to prevent race conditions.
  */
 export async function PATCH(
   _request: Request,
@@ -16,19 +17,15 @@ export async function PATCH(
   try {
     const { code } = params
 
-    const result = await db
-      .select({ id: sessions.id, status: sessions.status })
+    const lookupResult = await db
+      .select({ id: sessions.id })
       .from(sessions)
       .where(eq(sessions.code, code))
 
-    const session = result[0]
+    const session = lookupResult[0]
 
     if (!session) {
       return NextResponse.json({ error: 'Session not found' }, { status: 404 })
-    }
-
-    if ((session.status as SessionStatus) !== SessionStatus.Collecting) {
-      return NextResponse.json({ error: 'Session is not in collecting status' }, { status: 409 })
     }
 
     const submissions = await db
@@ -39,7 +36,8 @@ export async function PATCH(
     const phrasePool = submissions.map((s) => s.phrase)
     const now = new Date()
 
-    await db
+    // Optimistic lock: only update if still collecting (prevents TOCTOU race)
+    const updated = await db
       .update(sessions)
       .set({
         status: SessionStatus.Locked,
@@ -47,7 +45,12 @@ export async function PATCH(
         phrasePool,
         lastActivityAt: now,
       })
-      .where(eq(sessions.id, session.id))
+      .where(and(eq(sessions.id, session.id), eq(sessions.status, SessionStatus.Collecting)))
+      .returning({ id: sessions.id })
+
+    if (updated.length === 0) {
+      return NextResponse.json({ error: 'Session is not in collecting status' }, { status: 409 })
+    }
 
     return NextResponse.json({ locked: true, phraseCount: phrasePool.length })
   } catch (error) {

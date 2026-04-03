@@ -4,6 +4,8 @@
  */
 import { integer, jsonb, pgTable, text, timestamp, unique, uuid } from 'drizzle-orm/pg-core'
 
+import { SessionStatus, SubmissionVisibility } from '@/types/enums'
+
 /**
  * Bingo sessions. Each session contains a phrase pool, lifecycle status, and timing metadata.
  * Sessions transition from collecting → locked and expire after 2 hours of inactivity.
@@ -12,8 +14,8 @@ export const sessions = pgTable('sessions', {
   id: uuid('id').primaryKey().defaultRandom(),
   code: text('code').notNull().unique(),
   phrasePool: jsonb('phrase_pool').notNull().$type<string[]>().default([]),
-  status: text('status').notNull().default('collecting'),
-  visibility: text('visibility').notNull().default('open'),
+  status: text('status').notNull().default(SessionStatus.Collecting),
+  visibility: text('visibility').notNull().default(SubmissionVisibility.Open),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   lastActivityAt: timestamp('last_activity_at', { withTimezone: true }).notNull().defaultNow(),
   scheduledLockAt: timestamp('scheduled_lock_at', { withTimezone: true }),

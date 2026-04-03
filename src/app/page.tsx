@@ -3,6 +3,8 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 
+import { SubmissionVisibility } from '@/types/enums'
+
 interface SessionResult {
   readonly code: string
   readonly url: string
@@ -14,7 +16,7 @@ interface SessionResult {
  * then creates a session and displays the shareable URL.
  */
 export default function HomePage() {
-  const [visibility, setVisibility] = useState<'open' | 'blind'>('open')
+  const [visibility, setVisibility] = useState(SubmissionVisibility.Open)
   const [scheduledLockAt, setScheduledLockAt] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -67,12 +69,17 @@ export default function HomePage() {
   function handleCopy() {
     if (!result) return
     const fullUrl = `${window.location.origin}${result.url}`
-    void navigator.clipboard.writeText(fullUrl).then(() => {
-      setCopied(true)
-      setTimeout(() => {
-        setCopied(false)
-      }, 2000)
-    })
+    void navigator.clipboard.writeText(fullUrl).then(
+      () => {
+        setCopied(true)
+        setTimeout(() => {
+          setCopied(false)
+        }, 2000)
+      },
+      () => {
+        setError('Failed to copy to clipboard')
+      },
+    )
   }
 
   // Minimum datetime for the scheduled lock input (now, in local format)
@@ -102,10 +109,10 @@ export default function HomePage() {
                 <button
                   type="button"
                   onClick={() => {
-                    setVisibility('open')
+                    setVisibility(SubmissionVisibility.Open)
                   }}
                   className={`rounded-lg border px-4 py-3 text-left transition ${
-                    visibility === 'open'
+                    visibility === SubmissionVisibility.Open
                       ? 'border-indigo-500 bg-indigo-500/20'
                       : 'border-gray-700 bg-gray-900 hover:border-gray-600'
                   }`}
@@ -116,10 +123,10 @@ export default function HomePage() {
                 <button
                   type="button"
                   onClick={() => {
-                    setVisibility('blind')
+                    setVisibility(SubmissionVisibility.Blind)
                   }}
                   className={`rounded-lg border px-4 py-3 text-left transition ${
-                    visibility === 'blind'
+                    visibility === SubmissionVisibility.Blind
                       ? 'border-indigo-500 bg-indigo-500/20'
                       : 'border-gray-700 bg-gray-900 hover:border-gray-600'
                   }`}

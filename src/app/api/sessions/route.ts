@@ -41,6 +41,9 @@ function parseBody(body: unknown): CreateSessionBody | string {
     if (isNaN(date.getTime())) {
       return 'scheduledLockAt must be a valid datetime'
     }
+    if (date.getTime() <= Date.now()) {
+      return 'scheduledLockAt must be in the future'
+    }
   }
 
   const result: CreateSessionBody = {}
