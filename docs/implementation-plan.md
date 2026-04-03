@@ -295,6 +295,43 @@ Complete phases in order. No phase skips.
 
 ---
 
+## Phase 6b — Core Playwright Tests
+
+**Deliverable:** Playwright E2E tests covering the complete create → collect → lock → board → call → bingo flow. Run against a live Supabase instance.
+
+### Why now (not Phase 9)
+
+Phases 1-6 deliver the full gameplay loop. Testing this end-to-end now catches integration bugs before layering on audio, theming, and polish. Waiting until Phase 9 means debugging real-time sync issues late when they're harder to isolate.
+
+### Setup
+
+1. Install Playwright browsers: `npx playwright install`
+2. Create `playwright.config.ts` with `baseURL: 'http://localhost:3000'`, `webServer` config to start dev server
+3. Ensure `.env.local` is loaded for the dev server (Supabase connection required)
+
+### Playwright Feature Tests
+
+```
+tests/e2e/
+├── create-session.spec.ts      # Host creates session, receives shareable URL
+├── join-session.spec.ts        # Player opens URL, collection view renders
+├── submit-phrases.spec.ts      # Player submits phrases, count updates (open + blind modes)
+├── lock-session.spec.ts        # Manual lock transitions to board view
+├── call-phrase.spec.ts         # Player calls phrase, tile auto-marks, phrase leaves list
+├── undo-phrase.spec.ts         # Player undoes within 30s, marks removed, phrase returns
+├── bingo-detection.spec.ts     # Player achieves bingo, toast fires
+└── presence.spec.ts            # Two players: headcount shows 2
+```
+
+### Acceptance Criteria
+
+- All Playwright tests pass locally against dev server + Supabase
+- Tests use real database (not mocks) — each test creates a fresh session
+- Tests clean up after themselves (sessions expire via 2-hour cleanup, or test uses unique codes)
+- No test relies on implementation details — test visible user behaviour only
+
+---
+
 ## Phase 7 — Class System + Audio
 
 **Deliverable:** Players can pick or randomly roll a WoW class; tile marks play class-specific synthesized sounds.
@@ -371,35 +408,29 @@ Complete phases in order. No phase skips.
 
 ---
 
-## Phase 9 — Testing
+## Phase 9 — Testing Expansion
 
-**Deliverable:** Core user flows covered by Playwright tests; critical pure functions covered by Vitest.
+**Deliverable:** Expand test coverage to include Phase 7-8 features (class system, audio, theme) and add CI integration. Core gameplay Playwright tests already exist from Phase 6b.
 
-### Vitest Unit Tests (already partially done in earlier phases)
+### Additional Vitest Unit Tests
 
-- `generateBoard` — determinism, uniqueness, size
-- `detectBingo` — all 12 patterns, no false positives
-- `generateSessionCode` — format, uniqueness distribution
-- `validatePhrasePool` — min/max bounds, deduplication
 - `AudioEngine` — mock AudioContext, verify correct synthesizer called per class
 
-### Playwright Feature Tests
+### Additional Playwright Feature Tests
 
 ```
 tests/e2e/
-├── create-session.spec.ts      # Host creates session, receives shareable URL
-├── join-session.spec.ts        # Player opens URL, board renders with 25 tiles
-├── call-phrase.spec.ts         # Player calls phrase, tile auto-marks, phrase leaves list
-├── undo-phrase.spec.ts         # Player undoes within 30s, marks removed, phrase returns
-├── bingo-detection.spec.ts     # Player achieves bingo, toast fires
-├── presence.spec.ts            # Two players: headcount shows 2
 ├── class-selector.spec.ts      # Roll dice, class assigned, persists on refresh
 └── session-expiry.spec.ts      # Expired session returns 404 (mocked)
 ```
 
+### CI Integration
+
+- Set up GitHub Actions: typecheck + lint + vitest + playwright on every PR
+
 ### Acceptance Criteria
 
-- All Playwright tests pass in CI
+- All Playwright tests pass in CI (including Phase 6b tests)
 - All Vitest tests pass
 - No test relies on internal implementation details — test behaviour, not internals
 
