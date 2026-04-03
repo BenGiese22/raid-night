@@ -47,8 +47,8 @@ const NOUNS = [
 /** Result of phrase pool validation */
 export interface ValidationResult {
   readonly valid: boolean
-  readonly phrases: string[]
-  readonly errors: string[]
+  readonly phrases: readonly string[]
+  readonly errors: readonly string[]
 }
 
 /**
@@ -74,10 +74,6 @@ export function generateSessionCode(): string {
 export function validatePhrasePool(phrases: string[]): ValidationResult {
   const errors: string[] = []
 
-  if (phrases.length > 100) {
-    errors.push('Phrase pool must not exceed 100 phrases')
-  }
-
   const seen = new Set<string>()
   const cleaned: string[] = []
 
@@ -91,6 +87,10 @@ export function validatePhrasePool(phrases: string[]): ValidationResult {
 
   if (cleaned.length < 25) {
     errors.push('Phrase pool must contain at least 25 unique phrases')
+  }
+
+  if (cleaned.length > 100) {
+    errors.push('Phrase pool must not exceed 100 unique phrases')
   }
 
   return { valid: errors.length === 0, phrases: cleaned, errors }

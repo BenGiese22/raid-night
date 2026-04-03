@@ -40,10 +40,17 @@ describe('validatePhrasePool', () => {
     expect(result.errors[0]).toContain('25')
   })
 
-  it('rejects more than 100 phrases', () => {
+  it('rejects more than 100 unique phrases', () => {
     const result = validatePhrasePool(makePool(101))
     expect(result.valid).toBe(false)
     expect(result.errors[0]).toContain('100')
+  })
+
+  it('accepts 101 raw phrases if duplicates reduce to 100 unique', () => {
+    const phrases = [...makePool(100), 'PHRASE 1']
+    const result = validatePhrasePool(phrases)
+    expect(result.valid).toBe(true)
+    expect(result.phrases).toHaveLength(100)
   })
 
   it('deduplicates case-insensitively', () => {
@@ -71,5 +78,12 @@ describe('validatePhrasePool', () => {
     const result = validatePhrasePool(makePool(100))
     expect(result.valid).toBe(true)
     expect(result.phrases).toHaveLength(100)
+  })
+
+  it('filters out empty and whitespace-only strings', () => {
+    const phrases = [...makePool(25), '', '   ', '\t', '\n']
+    const result = validatePhrasePool(phrases)
+    expect(result.valid).toBe(true)
+    expect(result.phrases).toHaveLength(25)
   })
 })

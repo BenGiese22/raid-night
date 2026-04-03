@@ -75,10 +75,12 @@ export function generateBoard(
  * @param sessionCode - Human-readable session identifier
  * @returns UUID string identifying the player within this session
  */
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
+
 export function getOrCreatePlayerId(sessionCode: string): string {
   const key = `player_${sessionCode}`
   const existing = localStorage.getItem(key)
-  if (existing) {
+  if (existing && UUID_RE.test(existing)) {
     return existing
   }
   const id = crypto.randomUUID()

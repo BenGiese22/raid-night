@@ -14,5 +14,13 @@
   "rules": {
     "@typescript-eslint/no-explicit-any": "error",
     "@typescript-eslint/consistent-type-imports": ["error", { "prefer": "type-imports" }]
-  }
+  },
+  "overrides": [
+    {
+      "files": ["tests/**/*.ts"],
+      "rules": {
+        "drizzle/enforce-delete-with-where": "off"
+      }
+    }
+  ]
 }

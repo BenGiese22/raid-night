@@ -95,7 +95,6 @@ describe('getOrCreatePlayerId', () => {
       setItem: (key: string, value: string) => {
         store.set(key, value)
       },
-      // eslint-disable-next-line drizzle/enforce-delete-with-where
       removeItem: (key: string) => {
         store.delete(key)
       },
@@ -131,5 +130,12 @@ describe('getOrCreatePlayerId', () => {
     const idA = getOrCreatePlayerId('session-a')
     const idB = getOrCreatePlayerId('session-b')
     expect(idA).not.toBe(idB)
+  })
+
+  it('regenerates UUID if cached value is corrupted', () => {
+    store.set('player_test-session', 'not-a-uuid')
+    const id = getOrCreatePlayerId('test-session')
+    expect(id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/)
+    expect(id).not.toBe('not-a-uuid')
   })
 })
