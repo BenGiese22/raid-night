@@ -252,6 +252,22 @@ npm run db:push      # Push schema to Supabase
 npm run db:studio    # Drizzle Studio visual explorer
 ```
 
+### SSL Certificate Issue (Local Dev)
+
+The Supabase Postgres connection requires `NODE_TLS_REJECT_UNAUTHORIZED=0` for local Drizzle commands (`db:push`, `db:generate`, `db:studio`). This is because the `pg` library rejects the Supabase pooler's SSL certificate chain locally.
+
+**For Drizzle commands, prefix with:**
+
+```bash
+NODE_TLS_REJECT_UNAUTHORIZED=0 npm run db:push
+```
+
+This is only needed in local development — Vercel deployments handle SSL natively.
+
+### pg_cron Jobs (Supabase SQL Editor Only)
+
+The `cron` schema requires superuser access. Cron job SQL (`src/db/sql/cron-jobs.sql`) must be applied via the **Supabase Dashboard → SQL Editor**. All other SQL files can be applied via the direct Postgres connection.
+
 ---
 
 ## Database Patterns
