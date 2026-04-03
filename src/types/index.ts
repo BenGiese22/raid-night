@@ -7,4 +7,11 @@ export {
   RealtimeEvent,
 } from './enums'
 
-export type { Session, PhraseSubmission, CalledPhrase, TileMark, BingoEvent } from './models'
+export type {
+  Session,
+  PhraseSubmission,
+  CalledPhrase,
+  TileMark,
+  BingoEvent,
+  SessionPageData,
+} from './models'

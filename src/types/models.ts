@@ -66,3 +66,16 @@ export interface BingoEvent {
   readonly pattern: BingoPattern
   readonly firedAt: Date
 }
+
+/**
+ * Serializable session data passed from server component to client component.
+ * Dates are ISO strings because server→client props must be serializable.
+ */
+export interface SessionPageData {
+  readonly id: string
+  readonly code: string
+  readonly status: SessionStatus
+  readonly visibility: SubmissionVisibility
+  readonly scheduledLockAt: string | null
+  readonly phrasePool: readonly string[]
+}
