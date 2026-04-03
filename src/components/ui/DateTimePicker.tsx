@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 interface DateTimePickerProps {
   /** ISO datetime-local string (YYYY-MM-DDTHH:MM) or empty string */
@@ -11,6 +11,8 @@ interface DateTimePickerProps {
 
 const HOURS = Array.from({ length: 12 }, (_, i) => i + 1)
 const MINUTES = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55]
+const MIN_LOCK_DELAY_MS = 5 * 60 * 1000 // 5 minutes
+const MAX_LOCK_DELAY_MS = 24 * 60 * 60 * 1000 // 24 hours
 
 function pad(n: number): string {
   return String(n).padStart(2, '0')
@@ -51,9 +53,26 @@ function toDateTimeLocal(date: string, hour: number, minute: number, period: 'AM
   return `${date}T${pad(h24)}:${pad(minute)}`
 }
 
+function validateLockTime(datetimeLocal: string): string | null {
+  if (!datetimeLocal) return null
+  const selected = new Date(datetimeLocal)
+  if (isNaN(selected.getTime())) return null
+
+  const delayMs = selected.getTime() - Date.now()
+
+  if (delayMs < MIN_LOCK_DELAY_MS) {
+    return 'Must be at least 5 minutes from now'
+  }
+  if (delayMs > MAX_LOCK_DELAY_MS) {
+    return 'Must be within 24 hours'
+  }
+  return null
+}
+
 /**
  * Custom date and time picker with separate date input, hour/minute/AM-PM selectors,
  * and quick-select buttons for "Today" and "Tomorrow".
+ * Validates that the selected time is 5 minutes to 24 hours from now.
  */
 export function DateTimePicker({ value, onChange }: DateTimePickerProps) {
   const parsed = parseDateTimeLocal(value)
@@ -63,10 +82,15 @@ export function DateTimePicker({ value, onChange }: DateTimePickerProps) {
   const [minute, setMinute] = useState(parsed?.minute ?? 0)
   const [period, setPeriod] = useState<'AM' | 'PM'>(parsed?.period ?? 'PM')
 
-  // Sync outward when any field changes
+  const currentValue = date ? toDateTimeLocal(date, hour, minute, period) : ''
+  const validationError = useMemo(() => validateLockTime(currentValue), [currentValue])
+
+  // Sync outward when any field changes — only emit valid values
   useEffect(() => {
     if (date) {
-      onChange(toDateTimeLocal(date, hour, minute, period))
+      const dtLocal = toDateTimeLocal(date, hour, minute, period)
+      const error = validateLockTime(dtLocal)
+      onChange(error ? '' : dtLocal)
     }
   }, [date, hour, minute, period]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -75,13 +99,15 @@ export function DateTimePicker({ value, onChange }: DateTimePickerProps) {
     onChange('')
   }
 
+  // Max date: tomorrow (24-hour constraint)
+  const maxDate = tomorrowDateString()
   const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone
 
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <span className="text-sm font-medium text-gray-400">Auto-lock at</span>
-        {value && (
+        {(date || value) && (
           <button
             type="button"
             onClick={handleClear}
@@ -98,6 +124,7 @@ export function DateTimePicker({ value, onChange }: DateTimePickerProps) {
           type="date"
           value={date}
           min={todayDateString()}
+          max={maxDate}
           onChange={(e) => {
             setDate(e.target.value)
           }}
@@ -191,6 +218,9 @@ export function DateTimePicker({ value, onChange }: DateTimePickerProps) {
           </button>
         </div>
       </div>
+
+      {/* Validation feedback */}
+      {date && validationError && <p className="text-xs text-yellow-400">{validationError}</p>}
 
       <p className="text-xs text-gray-500">Timezone: {userTimezone}</p>
     </div>
