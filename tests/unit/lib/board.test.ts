@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
-import { generateBoard } from '@/lib/board'
+import { detectBingo, generateBoard } from '@/lib/board'
+import { BingoPattern } from '@/types/enums'
 
 const PHRASE_POOL: readonly string[] = Array.from(
   { length: 30 },
@@ -42,5 +43,44 @@ describe('generateBoard', () => {
     const boardA = generateBoard('player-1', 'session-a', PHRASE_POOL)
     const boardB = generateBoard('player-1', 'session-b', PHRASE_POOL)
     expect(boardA).not.toEqual(boardB)
+  })
+})
+
+describe('detectBingo', () => {
+  const PATTERNS: readonly (readonly [BingoPattern, readonly number[]])[] = [
+    [BingoPattern.Row0, [0, 1, 2, 3, 4]],
+    [BingoPattern.Row1, [5, 6, 7, 8, 9]],
+    [BingoPattern.Row2, [10, 11, 12, 13, 14]],
+    [BingoPattern.Row3, [15, 16, 17, 18, 19]],
+    [BingoPattern.Row4, [20, 21, 22, 23, 24]],
+    [BingoPattern.Col0, [0, 5, 10, 15, 20]],
+    [BingoPattern.Col1, [1, 6, 11, 16, 21]],
+    [BingoPattern.Col2, [2, 7, 12, 17, 22]],
+    [BingoPattern.Col3, [3, 8, 13, 18, 23]],
+    [BingoPattern.Col4, [4, 9, 14, 19, 24]],
+    [BingoPattern.DiagTL, [0, 6, 12, 18, 24]],
+    [BingoPattern.DiagTR, [4, 8, 12, 16, 20]],
+  ]
+
+  it.each(PATTERNS)('detects %s pattern', (pattern, indices) => {
+    expect(detectBingo(indices)).toBe(pattern)
+  })
+
+  it('returns null for incomplete pattern', () => {
+    expect(detectBingo([0, 1, 2, 3])).toBeNull()
+  })
+
+  it('returns null for empty input', () => {
+    expect(detectBingo([])).toBeNull()
+  })
+
+  it('returns first matching pattern when multiple complete', () => {
+    // Row0 [0,1,2,3,4] + Col0 [0,5,10,15,20] — Row0 checked first
+    expect(detectBingo([0, 1, 2, 3, 4, 5, 10, 15, 20])).toBe(BingoPattern.Row0)
+  })
+
+  it('handles extra marked tiles beyond a pattern', () => {
+    const allTiles = Array.from({ length: 25 }, (_, i) => i)
+    expect(detectBingo(allTiles)).toBe(BingoPattern.Row0)
   })
 })
