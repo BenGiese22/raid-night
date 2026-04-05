@@ -6,8 +6,10 @@ import { generateBoard, detectBingo } from '@/lib/board'
 import { supabase } from '@/lib/supabase/client'
 import { BingoBoard } from '@/components/board/BingoBoard'
 import { useRealtimeSession } from '@/hooks/useRealtimeSession'
-import { PhraseCallList } from './PhraseCallList'
+import { BingoToast } from './BingoToast'
 import { CalledPhraseItem } from './CalledPhraseItem'
+import { PhraseCallList } from './PhraseCallList'
+import { PlayerProgress } from './PlayerProgress'
 
 interface BoardViewProps {
   readonly sessionId: string
@@ -143,9 +145,6 @@ export function BoardView({ sessionId, sessionCode, phrasePool, playerId }: Boar
     [calledPhrases],
   )
 
-  // allPlayerMarks will be wired in Task 9
-  void allPlayerMarks
-
   // Track which bingo patterns this player has already fired
   const firedPatternsRef = useRef(new Set<string>())
 
@@ -180,55 +179,61 @@ export function BoardView({ sessionId, sessionCode, phrasePool, playerId }: Boar
   }, [markedIndices, sessionId, playerId])
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-6">
-      <div className="mb-4 text-center">
-        <p className="text-sm text-gray-400">Session</p>
-        <p className="text-lg font-bold tracking-wider text-indigo-300">{sessionCode}</p>
-      </div>
-
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_300px]">
-        {/* Board */}
-        <div>
-          <h2 className="mb-2 text-sm font-medium text-gray-400">Your Board</h2>
-          <BingoBoard phrases={board} markedIndices={markedIndices} />
+    <>
+      <BingoToast bingoEvents={bingoEvents} playerId={playerId} />
+      <div className="mx-auto max-w-4xl px-4 py-6">
+        <div className="mb-4 text-center">
+          <p className="text-sm text-gray-400">Session</p>
+          <p className="text-lg font-bold tracking-wider text-indigo-300">{sessionCode}</p>
         </div>
 
-        {/* Sidebar: phrase calling + called history */}
-        <div className="space-y-4">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_300px]">
+          {/* Board */}
           <div>
-            <h2 className="mb-2 text-sm font-medium text-gray-400">Call a Phrase</h2>
-            <PhraseCallList
-              phrasePool={[...phrasePool]}
-              calledPhrases={calledPhraseSet}
-              onCallPhrase={(phrase) => {
-                void handleCallPhrase(phrase)
-              }}
-              disabled={isCallingPhrase}
-            />
+            <h2 className="mb-2 text-sm font-medium text-gray-400">Your Board</h2>
+            <BingoBoard phrases={board} markedIndices={markedIndices} />
+            <div className="mt-3">
+              <PlayerProgress allPlayerMarks={allPlayerMarks} currentPlayerId={playerId} />
+            </div>
           </div>
 
-          {calledPhraseList.length > 0 && (
+          {/* Sidebar: phrase calling + called history */}
+          <div className="space-y-4">
             <div>
-              <h2 className="mb-2 text-sm font-medium text-gray-400">
-                Called ({String(calledPhraseList.length)})
-              </h2>
-              <div className="max-h-48 space-y-1 overflow-y-auto">
-                {calledPhraseList.map((cp) => (
-                  <CalledPhraseItem
-                    key={cp.phrase}
-                    phrase={cp.phrase}
-                    calledAt={cp.calledAt}
-                    canUndo={cp.calledBy === playerId}
-                    onUndo={() => {
-                      void handleUndo(cp.phrase)
-                    }}
-                  />
-                ))}
-              </div>
+              <h2 className="mb-2 text-sm font-medium text-gray-400">Call a Phrase</h2>
+              <PhraseCallList
+                phrasePool={[...phrasePool]}
+                calledPhrases={calledPhraseSet}
+                onCallPhrase={(phrase) => {
+                  void handleCallPhrase(phrase)
+                }}
+                disabled={isCallingPhrase}
+              />
             </div>
-          )}
+
+            {calledPhraseList.length > 0 && (
+              <div>
+                <h2 className="mb-2 text-sm font-medium text-gray-400">
+                  Called ({String(calledPhraseList.length)})
+                </h2>
+                <div className="max-h-48 space-y-1 overflow-y-auto">
+                  {calledPhraseList.map((cp) => (
+                    <CalledPhraseItem
+                      key={cp.phrase}
+                      phrase={cp.phrase}
+                      calledAt={cp.calledAt}
+                      canUndo={cp.calledBy === playerId}
+                      onUndo={() => {
+                        void handleUndo(cp.phrase)
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+    </>
   )
 }
