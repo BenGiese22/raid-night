@@ -19,6 +19,7 @@ interface SessionResult {
 export default function HomePage() {
   const [visibility, setVisibility] = useState(SubmissionVisibility.Open)
   const [scheduledLockAt, setScheduledLockAt] = useState('')
+  const [freeSpace, setFreeSpace] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<SessionResult | null>(null)
@@ -31,7 +32,7 @@ export default function HomePage() {
     setResult(null)
 
     try {
-      const body: Record<string, unknown> = { visibility }
+      const body: Record<string, unknown> = { visibility, freeSpace }
 
       if (scheduledLockAt) {
         const date = new Date(scheduledLockAt)
@@ -134,6 +135,19 @@ export default function HomePage() {
 
             {/* Scheduled lock datetime */}
             <DateTimePicker value={scheduledLockAt} onChange={setScheduledLockAt} />
+
+            {/* Free space toggle */}
+            <label className="flex items-center gap-3 text-sm text-gray-300">
+              <input
+                type="checkbox"
+                checked={freeSpace}
+                onChange={(e) => {
+                  setFreeSpace(e.target.checked)
+                }}
+                className="h-4 w-4 rounded border-gray-700 bg-gray-900 text-indigo-500 focus:ring-indigo-500"
+              />
+              Free center space
+            </label>
 
             {/* Error message */}
             {error && (
