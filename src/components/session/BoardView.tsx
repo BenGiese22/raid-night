@@ -5,21 +5,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { generateBoard } from '@/lib/board'
 import { supabase } from '@/lib/supabase/client'
 import { BingoBoard } from '@/components/board/BingoBoard'
+import { useRealtimeSession } from '@/hooks/useRealtimeSession'
 import { PhraseCallList } from './PhraseCallList'
 import { CalledPhraseItem } from './CalledPhraseItem'
-
-interface CalledPhraseRecord {
-  readonly phrase: string
-  readonly calledBy: string
-  readonly calledAt: Date
-}
-
-/** Raw shape of a row returned from the called_phrases table. */
-interface CalledPhraseRow {
-  phrase: string
-  called_by: string
-  called_at: string
-}
 
 interface BoardViewProps {
   readonly sessionId: string
@@ -28,23 +16,15 @@ interface BoardViewProps {
   readonly playerId: string
 }
 
-/** Narrows an unknown realtime payload row to a CalledPhraseRow. */
-function toCalledPhraseRow(row: Record<string, unknown>): CalledPhraseRow {
-  return {
-    phrase: row['phrase'] as string,
-    called_by: row['called_by'] as string,
-    called_at: row['called_at'] as string,
-  }
-}
-
 /**
  * Main board view after session lock.
  * Renders the 5x5 board, phrase call list, called phrases with undo,
  * and handles real-time sync for phrase calls.
  */
 export function BoardView({ sessionId, sessionCode, phrasePool, playerId }: BoardViewProps) {
-  const [calledPhrases, setCalledPhrases] = useState(new Map<string, CalledPhraseRecord>())
   const [isCallingPhrase, setIsCallingPhrase] = useState(false)
+
+  const { calledPhrases, allPlayerMarks, bingoEvents } = useRealtimeSession(sessionId)
 
   // Deterministic board — same every render for this player + session
   const board = useMemo(
@@ -72,81 +52,6 @@ export function BoardView({ sessionId, sessionCode, phrasePool, playerId }: Boar
     }
     return indices
   }, [calledPhrases, phraseToIndex])
-
-  // Subscribe to called_phrases INSERT/DELETE + initial fetch
-  useEffect(() => {
-    const channel = supabase
-      .channel(`called-phrases:${sessionId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'called_phrases',
-          filter: `session_id=eq.${sessionId}`,
-        },
-        (payload) => {
-          const row = toCalledPhraseRow(payload.new as Record<string, unknown>)
-          const { phrase } = row
-          const calledBy = row.called_by
-          const calledAt = new Date(row.called_at)
-          setCalledPhrases((prev) => {
-            if (prev.has(phrase)) return prev
-            const next = new Map(prev)
-            next.set(phrase, { phrase, calledBy, calledAt })
-            return next
-          })
-        },
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'DELETE',
-          schema: 'public',
-          table: 'called_phrases',
-          filter: `session_id=eq.${sessionId}`,
-        },
-        (payload) => {
-          const row = toCalledPhraseRow(payload.old as Record<string, unknown>)
-          const { phrase } = row
-          setCalledPhrases((prev) => {
-            if (!prev.has(phrase)) return prev
-            const next = new Map(prev)
-            next.delete(phrase)
-            return next
-          })
-        },
-      )
-      .subscribe((_status, err) => {
-        if (err) {
-          console.error('called_phrases subscription error:', err)
-          return
-        }
-        // Fetch existing called phrases after subscription active
-        void supabase
-          .from('called_phrases')
-          .select('phrase, called_by, called_at')
-          .eq('session_id', sessionId)
-          .order('called_at', { ascending: true })
-          .then(({ data }) => {
-            if (!data) return
-            const map = new Map<string, CalledPhraseRecord>()
-            for (const raw of data) {
-              const row = raw as CalledPhraseRow
-              map.set(row.phrase, {
-                phrase: row.phrase,
-                calledBy: row.called_by,
-                calledAt: new Date(row.called_at),
-              })
-            }
-            setCalledPhrases(map)
-          })
-      })
-
-    return () => {
-      void supabase.removeChannel(channel)
-    }
-  }, [sessionId])
 
   // Sync tile marks to DB — only upsert/remove the delta, not the full set
   const prevMarkedPhrasesRef = useRef(new Set<string>())
@@ -237,6 +142,10 @@ export function BoardView({ sessionId, sessionCode, phrasePool, playerId }: Boar
       ),
     [calledPhrases],
   )
+
+  // allPlayerMarks and bingoEvents will be wired in Tasks 4 and 9
+  void allPlayerMarks
+  void bingoEvents
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-6">
