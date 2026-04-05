@@ -10,6 +10,7 @@ export interface Session {
   readonly phrasePool: string[]
   readonly status: SessionStatus
   readonly visibility: SubmissionVisibility
+  readonly freeSpace: boolean
   readonly createdAt: Date
   readonly lastActivityAt: Date
   readonly scheduledLockAt: Date | null
@@ -76,6 +77,7 @@ export interface SessionPageData {
   readonly code: string
   readonly status: SessionStatus
   readonly visibility: SubmissionVisibility
+  readonly freeSpace: boolean
   readonly scheduledLockAt: string | null
   readonly phrasePool: readonly string[]
 }

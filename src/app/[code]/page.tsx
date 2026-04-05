@@ -25,6 +25,7 @@ export default async function SessionPage({ params }: PageProps) {
       code={session.code}
       status={session.status as SessionStatus}
       visibility={session.visibility as SubmissionVisibility}
+      freeSpace={session.freeSpace}
       scheduledLockAt={session.scheduledLockAt?.toISOString() ?? null}
       phrasePool={session.phrasePool}
     />

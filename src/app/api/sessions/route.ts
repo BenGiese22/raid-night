@@ -14,6 +14,7 @@ const VALID_VISIBILITY = new Set<string>([SubmissionVisibility.Open, SubmissionV
 interface CreateSessionBody {
   visibility?: string
   scheduledLockAt?: string | null
+  freeSpace?: boolean
 }
 
 function parseBody(body: unknown): CreateSessionBody | string {
@@ -62,6 +63,14 @@ function parseBody(body: unknown): CreateSessionBody | string {
     result.scheduledLockAt = obj.scheduledLockAt as string | null
   }
 
+  if ('freeSpace' in obj && typeof obj.freeSpace !== 'boolean') {
+    return 'freeSpace must be a boolean'
+  }
+
+  if ('freeSpace' in obj) {
+    result.freeSpace = obj.freeSpace as boolean
+  }
+
   return result
 }
 
@@ -99,6 +108,7 @@ export async function POST(request: Request): Promise<NextResponse> {
           code,
           status: SessionStatus.Collecting,
           visibility,
+          freeSpace: parsed.freeSpace ?? false,
           ...(scheduledLockAt != null ? { scheduledLockAt } : {}),
         })
 

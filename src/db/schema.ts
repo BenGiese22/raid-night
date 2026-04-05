@@ -2,7 +2,16 @@
  * Drizzle ORM schema — single source of truth for all database tables.
  * Column names use camelCase in TypeScript, snake_case in Postgres.
  */
-import { integer, jsonb, pgTable, text, timestamp, unique, uuid } from 'drizzle-orm/pg-core'
+import {
+  boolean,
+  integer,
+  jsonb,
+  pgTable,
+  text,
+  timestamp,
+  unique,
+  uuid,
+} from 'drizzle-orm/pg-core'
 
 import { SessionStatus, SubmissionVisibility } from '@/types/enums'
 
@@ -16,6 +25,7 @@ export const sessions = pgTable('sessions', {
   phrasePool: jsonb('phrase_pool').notNull().$type<string[]>().default([]),
   status: text('status').notNull().default(SessionStatus.Collecting),
   visibility: text('visibility').notNull().default(SubmissionVisibility.Open),
+  freeSpace: boolean('free_space').notNull().default(false),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   lastActivityAt: timestamp('last_activity_at', { withTimezone: true }).notNull().defaultNow(),
   scheduledLockAt: timestamp('scheduled_lock_at', { withTimezone: true }),
