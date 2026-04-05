@@ -18,7 +18,7 @@ export interface Session {
 
 /**
  * A phrase submitted by a player during the collection phase.
- * Phrases are normalised to lowercase trimmed. UNIQUE(session_id, phrase) prevents duplicates.
+ * Phrases are trimmed of whitespace. UNIQUE(session_id, phrase) prevents duplicates (case-sensitive).
  */
 export interface PhraseSubmission {
   readonly id: string

@@ -24,7 +24,7 @@ export const sessions = pgTable('sessions', {
 
 /**
  * Phrases submitted by players during the collection phase.
- * Normalised to lowercase trimmed. UNIQUE(session_id, phrase) prevents duplicates.
+ * Trimmed of whitespace. UNIQUE(session_id, phrase) prevents duplicates (case-sensitive).
  */
 export const phraseSubmissions = pgTable(
   'phrase_submissions',

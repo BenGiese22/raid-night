@@ -82,14 +82,14 @@ export function CollectionView({
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
-    const normalised = inputValue.trim().toLowerCase()
-    if (!normalised) return
+    const trimmed = inputValue.trim()
+    if (!trimmed) return
 
     setIsSubmitting(true)
     try {
       const { error } = await supabase.from('phrase_submissions').insert({
         session_id: sessionId,
-        phrase: normalised,
+        phrase: trimmed,
         submitted_by: playerId,
       })
       // Silently ignore unique constraint violations (duplicate phrase)
