@@ -83,12 +83,16 @@ export const tileMarks = pgTable(
  * Bingo events fired when a player completes a winning pattern.
  * Triggers a celebration toast for all connected players.
  */
-export const bingoEvents = pgTable('bingo_events', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  sessionId: uuid('session_id')
-    .notNull()
-    .references(() => sessions.id, { onDelete: 'cascade' }),
-  playerId: uuid('player_id').notNull(),
-  pattern: text('pattern').notNull(),
-  firedAt: timestamp('fired_at', { withTimezone: true }).notNull().defaultNow(),
-})
+export const bingoEvents = pgTable(
+  'bingo_events',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    sessionId: uuid('session_id')
+      .notNull()
+      .references(() => sessions.id, { onDelete: 'cascade' }),
+    playerId: uuid('player_id').notNull(),
+    pattern: text('pattern').notNull(),
+    firedAt: timestamp('fired_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [unique().on(t.sessionId, t.playerId, t.pattern)],
+)
