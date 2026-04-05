@@ -1,3 +1,11 @@
+/** Returns a Tailwind text-size class based on phrase length. */
+function textSizeClass(text: string): string {
+  const len = text.length
+  if (len <= 10) return 'text-sm'
+  if (len <= 25) return 'text-xs'
+  return 'text-[10px]'
+}
+
 interface BingoTileProps {
   readonly phrase: string
   readonly index: number
@@ -13,13 +21,13 @@ export function BingoTile({ phrase, index, marked }: BingoTileProps) {
     <div
       data-testid={`bingo-tile-${String(index)}`}
       data-marked={String(marked)}
-      className={`flex items-center justify-center rounded border p-2 text-center text-xs font-medium transition-colors ${
+      className={`flex aspect-square items-center justify-center overflow-hidden rounded border p-1 text-center font-medium transition-colors ${textSizeClass(phrase)} ${
         marked
           ? 'border-amber-600 bg-amber-900/60 text-amber-100'
           : 'border-gray-700 bg-gray-900 text-gray-300'
       }`}
     >
-      <span className="line-clamp-3">{phrase}</span>
+      <span>{phrase}</span>
     </div>
   )
 }
