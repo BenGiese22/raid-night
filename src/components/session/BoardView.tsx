@@ -201,7 +201,7 @@ export function BoardView({
           {/* Board */}
           <div>
             <h2 className="mb-2 text-sm font-medium text-gray-400">Your Board</h2>
-            <BingoBoard phrases={board} markedIndices={markedIndices} />
+            <BingoBoard phrases={board} markedIndices={markedIndices} freeSpace={freeSpace} />
             <div className="mt-3">
               <PlayerProgress allPlayerMarks={allPlayerMarks} currentPlayerId={playerId} />
             </div>
