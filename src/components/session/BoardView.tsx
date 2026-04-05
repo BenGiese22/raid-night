@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
-import { generateBoard } from '@/lib/board'
+import { generateBoard, detectBingo } from '@/lib/board'
 import { supabase } from '@/lib/supabase/client'
 import { BingoBoard } from '@/components/board/BingoBoard'
 import { useRealtimeSession } from '@/hooks/useRealtimeSession'
@@ -143,9 +143,41 @@ export function BoardView({ sessionId, sessionCode, phrasePool, playerId }: Boar
     [calledPhrases],
   )
 
-  // allPlayerMarks and bingoEvents will be wired in Tasks 4 and 9
+  // allPlayerMarks will be wired in Task 9
   void allPlayerMarks
-  void bingoEvents
+
+  // Track which bingo patterns this player has already fired
+  const firedPatternsRef = useRef(new Set<string>())
+
+  // Sync firedPatternsRef from DB state so we don't re-fire on remount
+  useEffect(() => {
+    const myFired = new Set<string>(
+      bingoEvents.filter((e) => e.playerId === playerId).map((e) => e.pattern),
+    )
+    firedPatternsRef.current = myFired
+  }, [bingoEvents, playerId])
+
+  // Detect bingo after marks change and fire event if not already fired
+  useEffect(() => {
+    const pattern = detectBingo(Array.from(markedIndices))
+    if (!pattern) return
+    if (firedPatternsRef.current.has(pattern)) return
+
+    firedPatternsRef.current.add(pattern)
+
+    void supabase
+      .from('bingo_events')
+      .insert({
+        session_id: sessionId,
+        player_id: playerId,
+        pattern,
+      })
+      .then(({ error }) => {
+        if (error && error.code !== '23505') {
+          console.error('bingo_events insert error:', error)
+        }
+      })
+  }, [markedIndices, sessionId, playerId])
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-6">
