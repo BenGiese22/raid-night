@@ -6,6 +6,7 @@ import { getOrCreatePlayerId } from '@/lib/board'
 import { supabase } from '@/lib/supabase/client'
 import { SessionStatus } from '@/types/enums'
 import type { SessionPageData } from '@/types/models'
+import { BoardView } from '@/components/session/BoardView'
 import { CollectionView } from '@/components/session/CollectionView'
 
 /**
@@ -83,12 +84,12 @@ export function SessionClient(props: SessionPageData) {
   if (status === SessionStatus.Locked) {
     return (
       <main className="min-h-screen bg-gray-950 text-gray-100">
-        <div className="mx-auto max-w-2xl px-4 pt-12 text-center">
-          <h1 className="mb-4 text-2xl font-bold">Session Locked</h1>
-          <p className="text-gray-400">
-            {String(phrasePool.length)} phrases locked. Board view coming in Phase 5.
-          </p>
-        </div>
+        <BoardView
+          sessionId={props.id}
+          sessionCode={props.code}
+          phrasePool={phrasePool}
+          playerId={playerId}
+        />
       </main>
     )
   }
