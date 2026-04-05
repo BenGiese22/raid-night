@@ -96,6 +96,7 @@ export function SessionClient(props: SessionPageData) {
           sessionCode={props.code}
           phrasePool={phrasePool}
           playerId={playerId}
+          freeSpace={props.freeSpace}
         />
       </main>
     )

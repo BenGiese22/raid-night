@@ -16,6 +16,7 @@ interface BoardViewProps {
   readonly sessionCode: string
   readonly phrasePool: readonly string[]
   readonly playerId: string
+  readonly freeSpace: boolean
 }
 
 /**
@@ -23,7 +24,13 @@ interface BoardViewProps {
  * Renders the 5x5 board, phrase call list, called phrases with undo,
  * and handles real-time sync for phrase calls.
  */
-export function BoardView({ sessionId, sessionCode, phrasePool, playerId }: BoardViewProps) {
+export function BoardView({
+  sessionId,
+  sessionCode,
+  phrasePool,
+  playerId,
+  freeSpace,
+}: BoardViewProps) {
   const [isCallingPhrase, setIsCallingPhrase] = useState(false)
 
   const { calledPhrases, allPlayerMarks, bingoEvents } = useRealtimeSession(sessionId)
@@ -52,8 +59,11 @@ export function BoardView({ sessionId, sessionCode, phrasePool, playerId }: Boar
         indices.add(index)
       }
     }
+    if (freeSpace) {
+      indices.add(12)
+    }
     return indices
-  }, [calledPhrases, phraseToIndex])
+  }, [calledPhrases, phraseToIndex, freeSpace])
 
   // Sync tile marks to DB — only upsert/remove the delta, not the full set
   const prevMarkedPhrasesRef = useRef(new Set<string>())
