@@ -1,5 +1,6 @@
+// @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { act, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 
 import { CalledPhraseItem } from '@/components/session/CalledPhraseItem'
@@ -62,5 +63,23 @@ describe('CalledPhraseItem', () => {
     )
     await user.click(screen.getByRole('button', { name: /undo/i }))
     expect(onUndo).toHaveBeenCalledOnce()
+  })
+
+  it('hides undo button after 30 seconds', () => {
+    render(
+      <CalledPhraseItem
+        phrase="tank pulled early"
+        calledAt={new Date()}
+        canUndo={true}
+        onUndo={vi.fn()}
+      />,
+    )
+    expect(screen.getByRole('button', { name: /undo/i })).toBeDefined()
+
+    act(() => {
+      vi.advanceTimersByTime(30_100)
+    })
+
+    expect(screen.queryByRole('button', { name: /undo/i })).toBeNull()
   })
 })

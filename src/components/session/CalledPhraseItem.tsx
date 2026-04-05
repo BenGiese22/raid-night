@@ -16,8 +16,13 @@ interface CalledPhraseItemProps {
  * A single called phrase with a draining countdown bar and undo button.
  * The undo window lasts 30 seconds from calledAt.
  *
+ * Note: `calledAt` is a server timestamp; the countdown uses `Date.now()`.
+ * Client/server clock skew may cause the visual countdown to be slightly
+ * shorter or longer than 30s. The server-side RLS policy is the authoritative
+ * enforcement of the undo window.
+ *
  * @param phrase - The phrase text that was called
- * @param calledAt - The timestamp when the phrase was called
+ * @param calledAt - Server timestamp when the phrase was called
  * @param canUndo - Whether the current player can undo this call
  * @param onUndo - Callback fired when the player clicks Undo
  */

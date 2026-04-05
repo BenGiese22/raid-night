@@ -13,7 +13,7 @@ export function BingoBoard({ phrases, markedIndices }: BingoBoardProps) {
   return (
     <div className="grid grid-cols-5 gap-1">
       {phrases.map((phrase, index) => (
-        <BingoTile key={index} phrase={phrase} index={index} marked={markedIndices.has(index)} />
+        <BingoTile key={phrase} phrase={phrase} index={index} marked={markedIndices.has(index)} />
       ))}
     </div>
   )

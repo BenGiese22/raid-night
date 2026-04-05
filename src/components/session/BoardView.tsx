@@ -112,7 +112,6 @@ export function BoardView({ sessionId, sessionCode, phrasePool, playerId }: Boar
           setCalledPhrases((prev) => {
             if (!prev.has(phrase)) return prev
             const next = new Map(prev)
-            // eslint-disable-next-line drizzle/enforce-delete-with-where
             next.delete(phrase)
             return next
           })
@@ -149,27 +148,23 @@ export function BoardView({ sessionId, sessionCode, phrasePool, playerId }: Boar
     }
   }, [sessionId])
 
-  // Write tile marks to DB when called phrases change (for other players' real-time in Phase 6)
+  // Sync tile marks to DB — only upsert/remove the delta, not the full set
+  const prevMarkedPhrasesRef = useRef(new Set<string>())
   useEffect(() => {
-    const indicesToMark: { tileIndex: number; phrase: string }[] = []
-    for (const [phrase] of Array.from(calledPhrases.entries())) {
+    const currentPhrases = new Set<string>(Array.from(calledPhrases.keys()))
+
+    // Newly called phrases → upsert tile marks
+    const added = Array.from(currentPhrases).filter((p) => !prevMarkedPhrasesRef.current.has(p))
+    for (const phrase of added) {
       const index = phraseToIndex.get(phrase)
-      if (index !== undefined) {
-        indicesToMark.push({ tileIndex: index, phrase })
-      }
-    }
-
-    if (indicesToMark.length === 0) return
-
-    // Upsert tile marks — ignore conflicts (already marked)
-    for (const { tileIndex, phrase } of indicesToMark) {
+      if (index === undefined) continue
       void supabase
         .from('tile_marks')
         .upsert(
           {
             session_id: sessionId,
             player_id: playerId,
-            tile_index: tileIndex,
+            tile_index: index,
             phrase,
           },
           { onConflict: 'session_id,player_id,tile_index' },
@@ -180,17 +175,10 @@ export function BoardView({ sessionId, sessionCode, phrasePool, playerId }: Boar
           }
         })
     }
-  }, [calledPhrases, phraseToIndex, sessionId, playerId])
 
-  // Remove tile marks when phrases are undone
-  const prevCalledRef = useRef(new Set<string>())
-  useEffect(() => {
-    const currentPhrases = new Set<string>(Array.from(calledPhrases.keys()))
-    const removed = Array.from(prevCalledRef.current).filter((p) => !currentPhrases.has(p))
-    prevCalledRef.current = currentPhrases
-
+    // Undone phrases → remove tile marks
+    const removed = Array.from(prevMarkedPhrasesRef.current).filter((p) => !currentPhrases.has(p))
     for (const phrase of removed) {
-      // eslint-disable-next-line drizzle/enforce-delete-with-where
       void supabase
         .from('tile_marks')
         .delete()
@@ -198,7 +186,9 @@ export function BoardView({ sessionId, sessionCode, phrasePool, playerId }: Boar
         .eq('player_id', playerId)
         .eq('phrase', phrase)
     }
-  }, [calledPhrases, sessionId, playerId])
+
+    prevMarkedPhrasesRef.current = currentPhrases
+  }, [calledPhrases, phraseToIndex, sessionId, playerId])
 
   const handleCallPhrase = useCallback(
     async (phrase: string) => {
@@ -222,7 +212,6 @@ export function BoardView({ sessionId, sessionCode, phrasePool, playerId }: Boar
 
   const handleUndo = useCallback(
     async (phrase: string) => {
-      // eslint-disable-next-line drizzle/enforce-delete-with-where
       const { error } = await supabase
         .from('called_phrases')
         .delete()

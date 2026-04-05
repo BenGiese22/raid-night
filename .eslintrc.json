@@ -21,6 +21,12 @@
       "rules": {
         "drizzle/enforce-delete-with-where": "off"
       }
+    },
+    {
+      "files": ["src/components/**/*.tsx"],
+      "rules": {
+        "drizzle/enforce-delete-with-where": "off"
+      }
     }
   ]
 }
