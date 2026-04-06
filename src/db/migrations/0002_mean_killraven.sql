@@ -1,0 +1,2 @@
+ALTER TABLE "sessions" ADD COLUMN "free_space" boolean DEFAULT false NOT NULL;--> statement-breakpoint
+ALTER TABLE "bingo_events" ADD CONSTRAINT "bingo_events_session_id_player_id_pattern_unique" UNIQUE("session_id","player_id","pattern");

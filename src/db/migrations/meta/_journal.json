@@ -15,6 +15,13 @@
       "when": 1775235659376,
       "tag": "0001_cooing_mac_gargan",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1775437196916,
+      "tag": "0002_mean_killraven",
+      "breakpoints": true
     }
   ]
 }
