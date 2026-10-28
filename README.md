@@ -6,7 +6,7 @@ No accounts, no login, no host privileges after creation. Players are anonymous.
 
 ## How a session works
 
-1. **Create.** The host picks submission visibility (**Open**: live feed, or **Blind**: count only until lock), an optional auto-lock time (5 minutes to 24 hours out), and whether the center tile is a free space. The host gets a code like `frost-wolf-42` and a URL, `/{code}`.
+1. **Create.** The host picks submission visibility (**Open**: live feed, or **Blind**: count only until lock), an optional auto-lock time (5 minutes to 7 days out), and whether the center tile is a free space. The host gets a code like `frost-wolf-42` and a URL, `/{code}`.
 2. **Collect.** Anyone with the link submits phrases. Phrases are unique per session. Anyone can lock the session manually, or the scheduled lock fires automatically.
 3. **Lock.** All submissions are copied into the session's `phrase_pool` and the status flips to `locked`. Every connected client sees the change in real time.
 4. **Play.** Each player's board is `generateBoard(playerId, sessionCode, phrasePool)`, a Fisher-Yates shuffle seeded with `seedrandom(playerId + sessionCode)`, so a reload reproduces the same board. Any player can call a phrase from the list. It is inserted into `called_phrases`, and every client marks matching tiles. The caller can **undo within 30 seconds**.
@@ -162,4 +162,5 @@ Planned, per `docs/implementation-plan.md`: Playwright specs (Phase 6b), WoW cla
 
 - [`docs/raidnight-spec.md`](docs/raidnight-spec.md): full product specification
 - [`docs/implementation-plan.md`](docs/implementation-plan.md): phased build plan
+- [`docs/scheduling.md`](docs/scheduling.md): auto-lock scheduling rules, picker behavior, and design decisions
 - [`CLAUDE.md`](CLAUDE.md): conventions for AI-assisted work in this repo

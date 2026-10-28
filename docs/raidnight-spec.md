@@ -166,7 +166,7 @@ fired_at      timestamptz DEFAULT now()
 1. Creator visits /
    → Names the session (optional label)
    → Selects visibility: 'open' (live feed) or 'blind' (surprise reveal)
-   → Optionally sets scheduled_lock_at via datetime picker
+   → Optionally sets scheduled_lock_at via datetime picker (5 min to 7 days ahead; see docs/scheduling.md)
    → POST /api/sessions → creates session with status='collecting'
    → Redirected to /[code]
    → Shareable URL displayed: raidnight.vercel.app/frost-wolf-42
@@ -356,7 +356,7 @@ supabase
 
 - Session name input (optional display label)
 - Visibility toggle: "Open submissions" / "Blind submissions" with explanation of each
-- Scheduled lock datetime picker (optional; clear button to remove)
+- Scheduled lock picker (optional; "Don't auto-deal" to remove): day chips for the next 7 days, quick picks, time selectors, a plain-language summary, and a 7-day timeline. Rules and behavior are in [scheduling.md](scheduling.md)
 - "Create Session" button
 - On success: shareable URL with copy button, instructions for sharing
 
