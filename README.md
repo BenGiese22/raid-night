@@ -72,7 +72,7 @@ NODE_TLS_REJECT_UNAUTHORIZED=0 npm run db:push
 | `src/db/sql/rls-policies.sql` | Enables RLS and grants the `anon` role access. Deleting a `called_phrases` row is only allowed within 30 seconds of `called_at` |
 | `src/db/sql/triggers.sql`     | Bumps `sessions.last_activity_at` on every submission, call, and tile mark                                                      |
 
-The `NODE_TLS_REJECT_UNAUTHORIZED=0` prefix is needed for local Drizzle commands because `pg` rejects the Supabase pooler's certificate chain. It isn't needed on Vercel. The runtime client in `src/db/index.ts` already sets `ssl: { rejectUnauthorized: false }`.
+The `NODE_TLS_REJECT_UNAUTHORIZED=0` prefix is needed for local Drizzle Kit commands because `pg` rejects the Supabase pooler's certificate chain. The app itself doesn't need it, locally or on Vercel: `src/db/index.ts` strips `sslmode` from the connection string, which `pg` would otherwise treat as strict verification, and sets `ssl: { rejectUnauthorized: false }`.
 
 ### Run
 
