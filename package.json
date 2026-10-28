@@ -19,6 +19,11 @@
     "db:studio": "drizzle-kit studio",
     "prepare": "husky"
   },
+  "allowScripts": {
+    "esbuild": true,
+    "fsevents": true,
+    "unrs-resolver": true
+  },
   "dependencies": {
     "@supabase/supabase-js": "^2.101.1",
     "drizzle-orm": "^0.45.2",
