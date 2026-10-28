@@ -3,25 +3,79 @@
 @tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --night: 20 34 43;
+  --panel: 29 47 58;
+  --rule: 58 87 102;
+  --bone: 236 231 216;
+  --mist: 148 168 178;
+  --highlighter: 242 212 92;
+  --highlighter-ink: 27 26 15;
+  --flare: 255 107 87;
+  --ready: 127 209 196;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  background: rgb(var(--night));
+  color-scheme: dark;
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  min-height: 100vh;
+  font-variant-numeric: tabular-nums;
 }
 
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
+::selection {
+  background: rgb(var(--highlighter));
+  color: rgb(var(--highlighter-ink));
+}
+
+:focus-visible {
+  outline: 2px solid rgb(var(--highlighter));
+  outline-offset: 2px;
+}
+
+@layer components {
+  /* Condensed, heavy headline voice */
+  .display {
+    font-stretch: 68%;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    line-height: 0.95;
+  }
+
+  .field {
+    @apply w-full rounded-md border border-rule bg-night px-3 py-2.5 text-bone placeholder:text-mist/70;
+  }
+
+  .btn-primary {
+    @apply rounded-md bg-hl px-4 py-2.5 font-semibold text-hl-ink transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .btn-quiet {
+    @apply rounded-md border border-rule px-4 py-2.5 text-sm text-bone transition hover:border-mist disabled:cursor-not-allowed disabled:opacity-50;
+  }
+}
+
+@keyframes raid-warning {
+  from {
+    opacity: 0;
+    transform: translateY(-100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.raid-warning {
+  animation: raid-warning 380ms cubic-bezier(0.2, 0.9, 0.2, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .raid-warning {
+    animation: none;
+  }
+  * {
+    transition-duration: 0.01ms !important;
   }
 }

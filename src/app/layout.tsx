@@ -1,21 +1,24 @@
-import type { Metadata } from 'next'
-import localFont from 'next/font/local'
+import type { Metadata, Viewport } from 'next'
+import { Archivo } from 'next/font/google'
 import './globals.css'
 
-const geistSans = localFont({
-  src: './fonts/GeistVF.woff',
-  variable: '--font-geist-sans',
-  weight: '100 900',
-})
-const geistMono = localFont({
-  src: './fonts/GeistMonoVF.woff',
-  variable: '--font-geist-mono',
-  weight: '100 900',
+// Archivo's width axis gives us a condensed, heavy voice for headlines and a
+// normal-width voice for everything else without pulling in a second family.
+const archivo = Archivo({
+  subsets: ['latin'],
+  variable: '--font-archivo',
+  axes: ['wdth'],
+  display: 'swap',
 })
 
 export const metadata: Metadata = {
-  title: 'Raid Night',
-  description: 'A phrase-based bingo game for raid nights',
+  title: 'Raid Night Bingo',
+  description: 'Bingo for your raid group. Share one link, everyone gets their own board.',
+}
+
+export const viewport: Viewport = {
+  themeColor: '#14222B',
+  colorScheme: 'dark',
 }
 
 export default function RootLayout({
@@ -25,7 +28,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>{children}</body>
+      <body className={`${archivo.variable} bg-night font-sans text-bone antialiased`}>
+        {children}
+      </body>
     </html>
   )
 }

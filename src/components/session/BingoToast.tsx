@@ -14,10 +14,11 @@ interface BingoToastProps {
 interface ToastItem {
   readonly id: string
   readonly message: string
+  readonly isOwn: boolean
 }
 
 /**
- * Displays BINGO celebration toasts.
+ * Displays BINGO announcements as a raid-warning banner across the top of the screen.
  * "You got BINGO!" for own events, "Someone got BINGO!" for others.
  * Auto-dismisses after 5 seconds.
  */
@@ -30,8 +31,12 @@ export function BingoToast({ bingoEvents, playerId }: BingoToastProps) {
     for (const event of bingoEvents) {
       if (shownRef.current.has(event.id)) continue
       shownRef.current.add(event.id)
-      const message = event.playerId === playerId ? 'You got BINGO!' : 'Someone got BINGO!'
-      newToasts.push({ id: event.id, message })
+      const isOwn = event.playerId === playerId
+      newToasts.push({
+        id: event.id,
+        message: isOwn ? 'You got BINGO!' : 'Someone got BINGO!',
+        isOwn,
+      })
     }
     if (newToasts.length > 0) {
       setToasts((prev) => [...prev, ...newToasts])
@@ -53,13 +58,15 @@ export function BingoToast({ bingoEvents, playerId }: BingoToastProps) {
   if (toasts.length === 0) return null
 
   return (
-    <div className="fixed left-1/2 top-6 z-50 -translate-x-1/2 space-y-2">
-      {toasts.map((toast) => (
+    <div role="status" aria-live="assertive" className="fixed inset-x-0 top-0 z-50">
+      {toasts.slice(0, 1).map((toast) => (
         <div
           key={toast.id}
-          className="animate-bounce rounded-lg border border-amber-500 bg-amber-900/90 px-6 py-3 text-center text-lg font-bold text-amber-100 shadow-lg"
+          className={`raid-warning px-4 py-4 text-center shadow-[0_12px_40px_rgba(0,0,0,0.45)] ${
+            toast.isOwn ? 'bg-hl text-hl-ink' : 'border-b-4 border-hl bg-panel text-hl'
+          }`}
         >
-          {toast.message}
+          <p className="display text-4xl sm:text-6xl">{toast.message}</p>
         </div>
       ))}
     </div>

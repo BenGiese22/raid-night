@@ -106,13 +106,9 @@ export function DateTimePicker({ value, onChange }: DateTimePickerProps) {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <span className="text-sm font-medium text-gray-400">Auto-lock at</span>
+        <span className="text-sm font-semibold text-bone">Deal boards automatically at</span>
         {(date || value) && (
-          <button
-            type="button"
-            onClick={handleClear}
-            className="text-xs text-gray-500 hover:text-gray-300"
-          >
+          <button type="button" onClick={handleClear} className="text-xs text-mist hover:text-bone">
             Clear
           </button>
         )}
@@ -128,17 +124,17 @@ export function DateTimePicker({ value, onChange }: DateTimePickerProps) {
           onChange={(e) => {
             setDate(e.target.value)
           }}
-          className="flex-1 rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-gray-100 focus:border-indigo-500 focus:outline-none"
+          className="flex-1 rounded-md border border-rule bg-night px-3 py-2 text-sm text-bone"
         />
         <button
           type="button"
           onClick={() => {
             setDate(todayDateString())
           }}
-          className={`rounded-lg border px-3 py-2 text-xs transition ${
+          className={`rounded-md border px-3 py-2 text-xs transition ${
             date === todayDateString()
-              ? 'border-indigo-500 bg-indigo-500/20 text-indigo-300'
-              : 'border-gray-700 bg-gray-900 text-gray-400 hover:border-gray-600'
+              ? 'border-hl bg-hl text-hl-ink'
+              : 'border-rule bg-night text-mist hover:border-mist'
           }`}
         >
           Today
@@ -148,10 +144,10 @@ export function DateTimePicker({ value, onChange }: DateTimePickerProps) {
           onClick={() => {
             setDate(tomorrowDateString())
           }}
-          className={`rounded-lg border px-3 py-2 text-xs transition ${
+          className={`rounded-md border px-3 py-2 text-xs transition ${
             date === tomorrowDateString()
-              ? 'border-indigo-500 bg-indigo-500/20 text-indigo-300'
-              : 'border-gray-700 bg-gray-900 text-gray-400 hover:border-gray-600'
+              ? 'border-hl bg-hl text-hl-ink'
+              : 'border-rule bg-night text-mist hover:border-mist'
           }`}
         >
           Tomorrow
@@ -165,7 +161,7 @@ export function DateTimePicker({ value, onChange }: DateTimePickerProps) {
           onChange={(e) => {
             setHour(Number(e.target.value))
           }}
-          className="rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-gray-100 focus:border-indigo-500 focus:outline-none"
+          className="rounded-md border border-rule bg-night px-3 py-2 text-sm text-bone"
           aria-label="Hour"
         >
           {HOURS.map((h) => (
@@ -174,13 +170,13 @@ export function DateTimePicker({ value, onChange }: DateTimePickerProps) {
             </option>
           ))}
         </select>
-        <span className="text-gray-500">:</span>
+        <span className="text-mist">:</span>
         <select
           value={minute}
           onChange={(e) => {
             setMinute(Number(e.target.value))
           }}
-          className="rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-gray-100 focus:border-indigo-500 focus:outline-none"
+          className="rounded-md border border-rule bg-night px-3 py-2 text-sm text-bone"
           aria-label="Minute"
         >
           {MINUTES.map((m) => (
@@ -189,16 +185,14 @@ export function DateTimePicker({ value, onChange }: DateTimePickerProps) {
             </option>
           ))}
         </select>
-        <div className="flex overflow-hidden rounded-lg border border-gray-700">
+        <div className="flex overflow-hidden rounded-md border border-rule">
           <button
             type="button"
             onClick={() => {
               setPeriod('AM')
             }}
             className={`px-3 py-2 text-xs font-medium transition ${
-              period === 'AM'
-                ? 'bg-indigo-500/20 text-indigo-300'
-                : 'bg-gray-900 text-gray-400 hover:bg-gray-800'
+              period === 'AM' ? 'bg-hl text-hl-ink' : 'bg-night text-mist hover:text-bone'
             }`}
           >
             AM
@@ -209,9 +203,7 @@ export function DateTimePicker({ value, onChange }: DateTimePickerProps) {
               setPeriod('PM')
             }}
             className={`px-3 py-2 text-xs font-medium transition ${
-              period === 'PM'
-                ? 'bg-indigo-500/20 text-indigo-300'
-                : 'bg-gray-900 text-gray-400 hover:bg-gray-800'
+              period === 'PM' ? 'bg-hl text-hl-ink' : 'bg-night text-mist hover:text-bone'
             }`}
           >
             PM
@@ -220,9 +212,9 @@ export function DateTimePicker({ value, onChange }: DateTimePickerProps) {
       </div>
 
       {/* Validation feedback */}
-      {date && validationError && <p className="text-xs text-yellow-400">{validationError}</p>}
+      {date && validationError && <p className="text-xs text-hl">{validationError}</p>}
 
-      <p className="text-xs text-gray-500">Timezone: {userTimezone}</p>
+      <p className="text-xs text-mist">Timezone: {userTimezone}</p>
     </div>
   )
 }

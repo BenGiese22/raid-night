@@ -44,12 +44,14 @@ export function PhraseCallList({
         onChange={(e) => {
           setSearch(e.target.value)
         }}
-        className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-gray-100 placeholder-gray-500 focus:border-indigo-500 focus:outline-none"
+        className="field text-sm"
       />
-      <div className="max-h-48 space-y-1 overflow-y-auto rounded-lg border border-gray-700 bg-gray-900 p-2">
+      <div className="max-h-64 overflow-y-auto rounded-md border border-rule bg-panel">
         {filtered.length === 0 ? (
-          <p className="py-2 text-center text-sm text-gray-500">
-            {uncalled.length === 0 ? 'All phrases called!' : 'No matching phrases'}
+          <p className="px-3 py-4 text-sm text-mist">
+            {uncalled.length === 0
+              ? 'Every phrase has been called.'
+              : 'No phrase matches that search.'}
           </p>
         ) : (
           filtered.map((phrase) => (
@@ -60,14 +62,14 @@ export function PhraseCallList({
               onClick={() => {
                 onCallPhrase(phrase)
               }}
-              className="w-full rounded px-3 py-1.5 text-left text-sm text-gray-300 transition hover:bg-gray-800 disabled:opacity-50"
+              className="block w-full border-b border-rule/50 px-3 py-2.5 text-left text-sm text-bone transition last:border-b-0 hover:bg-hl hover:text-hl-ink disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-bone"
             >
               {phrase}
             </button>
           ))
         )}
       </div>
-      <p className="text-xs text-gray-500">
+      <p className="text-xs text-mist">
         {String(uncalled.length)} of {String(phrasePool.length)} phrases remaining
       </p>
     </div>

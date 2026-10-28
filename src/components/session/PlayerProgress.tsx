@@ -1,12 +1,12 @@
 const DOT_COLORS = [
-  'bg-blue-400',
-  'bg-green-400',
-  'bg-purple-400',
-  'bg-pink-400',
-  'bg-cyan-400',
-  'bg-orange-400',
-  'bg-yellow-400',
-  'bg-red-400',
+  'bg-sky-300',
+  'bg-emerald-300',
+  'bg-violet-300',
+  'bg-pink-300',
+  'bg-cyan-300',
+  'bg-orange-300',
+  'bg-lime-300',
+  'bg-rose-300',
 ]
 
 /**
@@ -27,21 +27,27 @@ interface PlayerProgressProps {
 }
 
 /**
- * Shows other players' tile progress as colored dots with counts.
+ * Shows other players' tile progress as a colored dot and a filled bar with counts.
  * Current player is excluded from the display.
  */
 export function PlayerProgress({ allPlayerMarks, currentPlayerId }: PlayerProgressProps) {
   const otherPlayers = Array.from(allPlayerMarks.entries()).filter(([id]) => id !== currentPlayerId)
 
   return (
-    <div data-testid="player-progress" className="flex flex-wrap gap-2">
+    <div data-testid="player-progress" className="flex flex-wrap gap-x-5 gap-y-2">
       {otherPlayers.map(([playerId, marks]) => {
         const colorClass: string =
-          DOT_COLORS[hashCode(playerId) % DOT_COLORS.length] ?? 'bg-blue-400'
+          DOT_COLORS[hashCode(playerId) % DOT_COLORS.length] ?? 'bg-sky-300'
         return (
-          <div key={playerId} className="flex items-center gap-1">
+          <div key={playerId} className="flex items-center gap-2">
             <span className={`inline-block h-2.5 w-2.5 rounded-full ${colorClass}`} />
-            <span className="text-xs text-gray-400">{String(marks.length)}/25</span>
+            <span className="h-1.5 w-16 overflow-hidden rounded-full bg-rule/60">
+              <span
+                className={`block h-full rounded-full ${colorClass}`}
+                style={{ width: `${String(Math.min(100, (marks.length / 25) * 100))}%` }}
+              />
+            </span>
+            <span className="text-xs text-mist">{String(marks.length)}/25</span>
           </div>
         )
       })}

@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 
+import { BingoBoard } from '@/components/board/BingoBoard'
 import { DateTimePicker } from '@/components/ui/DateTimePicker'
 import { SubmissionVisibility } from '@/types/enums'
 
@@ -10,6 +11,36 @@ interface SessionResult {
   readonly code: string
   readonly url: string
 }
+
+/** A mid-game board shown as a preview. Marked tiles form the middle row, with a free center. */
+const SAMPLE_PHRASES: readonly string[] = [
+  'tank pulls early',
+  'healer out of mana',
+  'someone is afk',
+  'wrong boss strat',
+  'wipe on trash',
+  'mic is open',
+  'loot argument',
+  'dps on the wrong target',
+  'standing in fire',
+  'we need a bio break',
+  'ready check fails',
+  'late again',
+  'free',
+  'cat on the keyboard',
+  'discord crashes',
+  'one more pull',
+  'who has the buff food',
+  'repair bill',
+  'summon stone',
+  'raid leader sighs',
+  'new strat doc',
+  'flask expired',
+  'disconnect mid-fight',
+  'a brave pug',
+  'it was lag',
+]
+const SAMPLE_MARKED: ReadonlySet<number> = new Set([2, 6, 10, 11, 12, 13, 14, 20])
 
 /**
  * Home page — session creation form.
@@ -85,120 +116,126 @@ export default function HomePage() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-950 text-gray-100">
-      <div className="mx-auto max-w-md px-4 pt-20">
-        <h1 className="mb-8 text-center text-3xl font-bold">Raid Night Bingo</h1>
+    <main className="mx-auto grid min-h-screen max-w-5xl items-center gap-12 px-4 py-12 lg:grid-cols-[minmax(0,420px)_minmax(0,1fr)] lg:gap-16">
+      <div>
+        <h1 className="display text-6xl sm:text-7xl">
+          Raid night
+          <br />
+          bingo
+        </h1>
+        <p className="mt-4 max-w-sm text-mist">
+          Your group adds the phrases. Everyone gets a different board. Call a phrase and it marks
+          for the whole raid.
+        </p>
 
         {!result ? (
           <form
             onSubmit={(e) => {
               void handleSubmit(e)
             }}
-            className="space-y-6"
+            className="mt-8 space-y-6"
           >
-            {/* Visibility toggle */}
             <fieldset>
-              <legend className="mb-2 text-sm font-medium text-gray-400">
-                Submission Visibility
-              </legend>
+              <legend className="mb-2 text-sm font-semibold">While the group adds phrases</legend>
               <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setVisibility(SubmissionVisibility.Open)
-                  }}
-                  className={`rounded-lg border px-4 py-3 text-left transition ${
-                    visibility === SubmissionVisibility.Open
-                      ? 'border-indigo-500 bg-indigo-500/20'
-                      : 'border-gray-700 bg-gray-900 hover:border-gray-600'
-                  }`}
-                >
-                  <span className="block font-medium">Open</span>
-                  <span className="block text-xs text-gray-400">Phrases visible as submitted</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setVisibility(SubmissionVisibility.Blind)
-                  }}
-                  className={`rounded-lg border px-4 py-3 text-left transition ${
-                    visibility === SubmissionVisibility.Blind
-                      ? 'border-indigo-500 bg-indigo-500/20'
-                      : 'border-gray-700 bg-gray-900 hover:border-gray-600'
-                  }`}
-                >
-                  <span className="block font-medium">Blind</span>
-                  <span className="block text-xs text-gray-400">Hidden until session locks</span>
-                </button>
+                {(
+                  [
+                    [
+                      SubmissionVisibility.Open,
+                      'Show them',
+                      'Everyone sees each phrase as it lands',
+                    ],
+                    [
+                      SubmissionVisibility.Blind,
+                      'Keep them hidden',
+                      'Only a count, until boards are dealt',
+                    ],
+                  ] as const
+                ).map(([value, title, hint]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    aria-pressed={visibility === value}
+                    onClick={() => {
+                      setVisibility(value)
+                    }}
+                    className={`rounded-md border px-3 py-3 text-left transition ${
+                      visibility === value
+                        ? 'border-hl bg-hl text-hl-ink'
+                        : 'border-rule bg-panel hover:border-mist'
+                    }`}
+                  >
+                    <span className="block font-semibold">{title}</span>
+                    <span
+                      className={`block text-xs ${visibility === value ? 'text-hl-ink/80' : 'text-mist'}`}
+                    >
+                      {hint}
+                    </span>
+                  </button>
+                ))}
               </div>
             </fieldset>
 
-            {/* Scheduled lock datetime */}
             <DateTimePicker value={scheduledLockAt} onChange={setScheduledLockAt} />
 
-            {/* Free space toggle */}
-            <label className="flex items-center gap-3 text-sm text-gray-300">
+            <label className="flex items-center gap-3 text-sm">
               <input
                 type="checkbox"
                 checked={freeSpace}
                 onChange={(e) => {
                   setFreeSpace(e.target.checked)
                 }}
-                className="h-4 w-4 rounded border-gray-700 bg-gray-900 text-indigo-500 focus:ring-indigo-500"
+                className="h-4 w-4 accent-hl"
               />
-              Free center space
+              Make the center tile a free space
             </label>
 
-            {/* Error message */}
             {error && (
-              <p className="rounded-lg border border-red-800 bg-red-900/30 px-4 py-2 text-sm text-red-300">
+              <p
+                role="alert"
+                className="rounded-md border border-flare/60 px-3 py-2 text-sm text-flare"
+              >
                 {error}
               </p>
             )}
 
-            {/* Submit button */}
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="w-full rounded-lg bg-indigo-600 px-4 py-3 font-medium transition hover:bg-indigo-500 disabled:opacity-50"
-            >
-              {isSubmitting ? 'Creating...' : 'Create Session'}
+            <button type="submit" disabled={isSubmitting} className="btn-primary w-full py-3">
+              {isSubmitting ? 'Creating…' : 'Create session'}
             </button>
           </form>
         ) : (
-          <div className="space-y-4">
-            <p className="text-center text-sm text-gray-400">Session created!</p>
-            <div className="flex items-center gap-2 rounded-lg border border-gray-700 bg-gray-900 px-4 py-3">
-              <code className="flex-1 truncate text-indigo-300">
+          <div className="mt-8 space-y-4">
+            <p className="font-semibold text-ready">
+              Session created. Send this link to your raid.
+            </p>
+            <div className="flex items-center gap-2 rounded-md border border-rule bg-panel px-3 py-3">
+              <code className="flex-1 truncate">
                 {typeof window !== 'undefined'
                   ? `${window.location.origin}${result.url}`
                   : result.url}
               </code>
-              <button
-                type="button"
-                onClick={handleCopy}
-                className="shrink-0 rounded bg-gray-700 px-3 py-1 text-sm hover:bg-gray-600"
-              >
-                {copied ? 'Copied!' : 'Copy'}
+              <button type="button" onClick={handleCopy} className="btn-quiet shrink-0 py-1.5">
+                {copied ? 'Copied' : 'Copy link'}
               </button>
             </div>
-            <a
-              href={result.url}
-              className="block w-full rounded-lg border border-indigo-500 px-4 py-3 text-center font-medium text-indigo-300 transition hover:bg-indigo-500/10"
-            >
-              Go to Session
+            <a href={result.url} className="btn-primary block w-full py-3 text-center">
+              Open session
             </a>
             <button
               type="button"
               onClick={() => {
                 setResult(null)
               }}
-              className="block w-full text-center text-sm text-gray-500 hover:text-gray-300"
+              className="block text-sm text-mist underline underline-offset-4 hover:text-bone"
             >
               Create another session
             </button>
           </div>
         )}
+      </div>
+
+      <div aria-hidden="true">
+        <BingoBoard phrases={SAMPLE_PHRASES} markedIndices={SAMPLE_MARKED} freeSpace />
       </div>
     </main>
   )

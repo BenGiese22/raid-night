@@ -12,7 +12,7 @@ interface BingoBoardProps {
  */
 export function BingoBoard({ phrases, markedIndices, freeSpace }: BingoBoardProps) {
   return (
-    <div className="grid grid-cols-5 gap-1">
+    <div className="grid grid-cols-5 gap-1 sm:gap-1.5">
       {phrases.map((phrase, index) => (
         <BingoTile
           key={phrase}

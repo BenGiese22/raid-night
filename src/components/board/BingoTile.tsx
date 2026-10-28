@@ -1,9 +1,9 @@
 /** Returns a Tailwind text-size class based on phrase length. */
 function textSizeClass(text: string): string {
   const len = text.length
-  if (len <= 10) return 'text-sm'
-  if (len <= 25) return 'text-xs'
-  return 'text-[10px]'
+  if (len <= 10) return 'text-[13px] sm:text-base'
+  if (len <= 25) return 'text-[11px] sm:text-sm'
+  return 'text-[10px] sm:text-xs'
 }
 
 interface BingoTileProps {
@@ -15,7 +15,7 @@ interface BingoTileProps {
 
 /**
  * A single tile on the 5x5 bingo board.
- * Displays the phrase text and reflects marked/unmarked state.
+ * Marked tiles read like highlighter on a printout; the free space is outlined in teal.
  * When isFreeSpace is true, displays "FREE" with distinct styling.
  */
 export function BingoTile({ phrase, index, marked, isFreeSpace }: BingoTileProps) {
@@ -25,12 +25,12 @@ export function BingoTile({ phrase, index, marked, isFreeSpace }: BingoTileProps
     <div
       data-testid={`bingo-tile-${String(index)}`}
       data-marked={String(marked)}
-      className={`flex aspect-square items-center justify-center overflow-hidden rounded border p-1 text-center font-medium transition-colors ${textSizeClass(displayText)} ${
+      className={`flex aspect-square items-center justify-center overflow-hidden rounded-md border p-1 text-center leading-tight transition-colors duration-200 [overflow-wrap:anywhere] sm:p-2 ${textSizeClass(displayText)} ${
         isFreeSpace
-          ? 'border-indigo-500 bg-indigo-500/20 text-indigo-200'
+          ? 'border-ready bg-ready/15 font-bold text-ready'
           : marked
-            ? 'border-amber-600 bg-amber-900/60 text-amber-100'
-            : 'border-gray-700 bg-gray-900 text-gray-300'
+            ? 'border-hl bg-hl font-semibold text-hl-ink'
+            : 'border-rule bg-panel text-bone'
       }`}
     >
       <span>{displayText}</span>

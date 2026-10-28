@@ -10,7 +10,8 @@ interface PresenceCountProps {
 export function PresenceCount({ playerCount }: PresenceCountProps) {
   const label = playerCount === 1 ? 'player' : 'players'
   return (
-    <p className="text-sm text-gray-400">
+    <p className="flex items-center gap-2 text-sm text-mist">
+      <span aria-hidden="true" className="h-2 w-2 rounded-full bg-ready" />
       {String(playerCount)} {label} in session
     </p>
   )

@@ -39,14 +39,14 @@ export function LockButton({ sessionCode, phraseCount }: LockButtonProps) {
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       {phraseCount < 25 && (
-        <p className="text-xs text-yellow-400">
-          Warning: At least 25 phrases are needed for full boards
+        <p className="rounded-md border border-hl/50 bg-hl/10 px-3 py-2 text-sm text-hl">
+          You need at least 25 phrases for a full board. {String(25 - phraseCount)} to go.
         </p>
       )}
 
-      {error && <p className="text-xs text-red-400">{error}</p>}
+      {error && <p className="text-sm text-flare">{error}</p>}
 
       {!isConfirming ? (
         <button
@@ -54,14 +54,15 @@ export function LockButton({ sessionCode, phraseCount }: LockButtonProps) {
           onClick={() => {
             setIsConfirming(true)
           }}
-          className="w-full rounded-lg border border-gray-600 px-4 py-2 text-sm text-gray-300 transition hover:border-gray-500 hover:text-gray-100"
+          className="btn-quiet w-full"
         >
-          Lock Session ({String(phraseCount)} phrases)
+          Lock and deal boards ({String(phraseCount)} phrases)
         </button>
       ) : (
-        <div className="space-y-2">
-          <p className="text-sm text-gray-300">
-            Lock {String(phraseCount)} phrases and start the game?
+        <div className="space-y-2 rounded-md border border-rule bg-panel p-3">
+          <p className="text-sm text-bone">
+            Lock {String(phraseCount)} phrases and deal everyone a board? Nobody can add phrases
+            after this.
           </p>
           <div className="flex gap-2">
             <button
@@ -70,9 +71,9 @@ export function LockButton({ sessionCode, phraseCount }: LockButtonProps) {
               onClick={() => {
                 void handleLock()
               }}
-              className="flex-1 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium transition hover:bg-indigo-500 disabled:opacity-50"
+              className="btn-primary flex-1 text-sm"
             >
-              {isLocking ? 'Locking...' : 'Confirm'}
+              {isLocking ? 'Locking…' : 'Lock and deal'}
             </button>
             <button
               type="button"
@@ -80,9 +81,9 @@ export function LockButton({ sessionCode, phraseCount }: LockButtonProps) {
               onClick={() => {
                 setIsConfirming(false)
               }}
-              className="flex-1 rounded-lg border border-gray-600 px-4 py-2 text-sm text-gray-400 transition hover:border-gray-500"
+              className="btn-quiet flex-1"
             >
-              Cancel
+              Keep collecting
             </button>
           </div>
         </div>

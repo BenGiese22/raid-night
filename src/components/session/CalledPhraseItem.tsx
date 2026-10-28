@@ -62,15 +62,18 @@ export function CalledPhraseItem({ phrase, calledAt, canUndo, onUndo }: CalledPh
   const pct = (remainingMs / UNDO_WINDOW_MS) * 100
 
   return (
-    <div className="relative rounded border border-gray-700 bg-gray-800 px-3 py-1.5">
-      <div className="flex items-center justify-between">
-        <span className="text-sm text-gray-300">{phrase}</span>
+    <div className="relative flex items-start gap-3 border-b border-rule/50 px-3 py-2 last:border-b-0">
+      <time dateTime={calledAt.toISOString()} className="mt-0.5 shrink-0 text-xs text-mist">
+        {calledAt.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
+      </time>
+      <div className="flex min-w-0 flex-1 items-center justify-between gap-2">
+        <span className="text-sm text-bone">{phrase}</span>
         {showUndo && (
           <button
             type="button"
             onClick={onUndo}
             aria-label={`Undo ${phrase}`}
-            className="ml-2 rounded px-2 py-0.5 text-xs text-red-400 transition hover:bg-red-900/30"
+            className="shrink-0 rounded border border-flare/60 px-2 py-0.5 text-xs text-flare transition hover:bg-flare hover:text-night"
           >
             Undo
           </button>
@@ -78,7 +81,7 @@ export function CalledPhraseItem({ phrase, calledAt, canUndo, onUndo }: CalledPh
       </div>
       {showUndo && (
         <div
-          className="absolute bottom-0 left-0 h-0.5 bg-red-500 transition-all"
+          className="absolute bottom-0 left-0 h-0.5 bg-flare transition-all"
           style={{ width: `${String(pct)}%` }}
         />
       )}

@@ -9,8 +9,18 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        background: 'var(--background)',
-        foreground: 'var(--foreground)',
+        night: 'rgb(var(--night) / <alpha-value>)',
+        panel: 'rgb(var(--panel) / <alpha-value>)',
+        rule: 'rgb(var(--rule) / <alpha-value>)',
+        bone: 'rgb(var(--bone) / <alpha-value>)',
+        mist: 'rgb(var(--mist) / <alpha-value>)',
+        hl: 'rgb(var(--highlighter) / <alpha-value>)',
+        'hl-ink': 'rgb(var(--highlighter-ink) / <alpha-value>)',
+        flare: 'rgb(var(--flare) / <alpha-value>)',
+        ready: 'rgb(var(--ready) / <alpha-value>)',
+      },
+      fontFamily: {
+        sans: ['var(--font-archivo)', 'system-ui', 'sans-serif'],
       },
     },
   },

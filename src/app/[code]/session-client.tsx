@@ -78,19 +78,16 @@ export function SessionClient(props: SessionPageData) {
   }, [props.id])
 
   if (!playerId) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-950 text-gray-400">
-        Loading...
-      </div>
-    )
+    return <div className="flex min-h-screen items-center justify-center text-mist">Loading…</div>
   }
 
   if (status === SessionStatus.Locked) {
     return (
-      <main className="min-h-screen bg-gray-950 text-gray-100">
-        <div className="mx-auto max-w-4xl px-4 pt-4">
+      <main className="min-h-screen">
+        <header className="mx-auto flex max-w-5xl items-baseline justify-between gap-4 px-4 pb-2 pt-5">
+          <h1 className="display text-3xl text-hl">{props.code}</h1>
           <PresenceCount playerCount={playerCount} />
-        </div>
+        </header>
         <BoardView
           sessionId={props.id}
           sessionCode={props.code}
@@ -103,9 +100,12 @@ export function SessionClient(props: SessionPageData) {
   }
 
   return (
-    <main className="min-h-screen bg-gray-950 text-gray-100">
-      <div className="mx-auto max-w-lg px-4 pt-12">
-        <h1 className="mb-6 text-center text-2xl font-bold">Raid Night Bingo</h1>
+    <main className="min-h-screen">
+      <div className="mx-auto max-w-xl px-4 pb-16 pt-6">
+        <div className="mb-8 flex items-baseline justify-between gap-4">
+          <p className="font-semibold">Raid Night Bingo</p>
+          <PresenceCount playerCount={playerCount} />
+        </div>
         <CollectionView
           sessionId={props.id}
           sessionCode={props.code}

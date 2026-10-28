@@ -42,8 +42,12 @@ export function LockCountdown({ scheduledLockAt, sessionCode }: LockCountdownPro
   }, [target, sessionCode])
 
   if (remainingMs <= 0) {
-    return <p className="text-sm text-yellow-400">Auto-locking now...</p>
+    return <p className="text-sm text-hl">Locking now…</p>
   }
 
-  return <p className="text-sm text-gray-400">Auto-locking in {formatCountdown(remainingMs)}</p>
+  return (
+    <p className="text-sm text-mist">
+      Boards deal in <span className="font-semibold text-bone">{formatCountdown(remainingMs)}</span>
+    </p>
+  )
 }

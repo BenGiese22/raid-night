@@ -191,26 +191,20 @@ export function BoardView({
   return (
     <>
       <BingoToast bingoEvents={bingoEvents} playerId={playerId} />
-      <div className="mx-auto max-w-4xl px-4 py-6">
-        <div className="mb-4 text-center">
-          <p className="text-sm text-gray-400">Session</p>
-          <p className="text-lg font-bold tracking-wider text-indigo-300">{sessionCode}</p>
-        </div>
-
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_300px]">
+      <div className="mx-auto max-w-5xl px-4 pb-10 pt-4">
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_340px]">
           {/* Board */}
-          <div>
-            <h2 className="mb-2 text-sm font-medium text-gray-400">Your Board</h2>
+          <section aria-label="Your board">
             <BingoBoard phrases={board} markedIndices={markedIndices} freeSpace={freeSpace} />
-            <div className="mt-3">
+            <div className="mt-4">
               <PlayerProgress allPlayerMarks={allPlayerMarks} currentPlayerId={playerId} />
             </div>
-          </div>
+          </section>
 
           {/* Sidebar: phrase calling + called history */}
-          <div className="space-y-4">
-            <div>
-              <h2 className="mb-2 text-sm font-medium text-gray-400">Call a Phrase</h2>
+          <div className="space-y-8">
+            <section>
+              <h2 className="mb-2 font-semibold">Call a phrase</h2>
               <PhraseCallList
                 phrasePool={[...phrasePool]}
                 calledPhrases={calledPhraseSet}
@@ -219,14 +213,15 @@ export function BoardView({
                 }}
                 disabled={isCallingPhrase}
               />
-            </div>
+            </section>
 
-            {calledPhraseList.length > 0 && (
-              <div>
-                <h2 className="mb-2 text-sm font-medium text-gray-400">
-                  Called ({String(calledPhraseList.length)})
-                </h2>
-                <div className="max-h-48 space-y-1 overflow-y-auto">
+            <section>
+              <h2 className="mb-2 font-semibold">
+                Called{' '}
+                <span className="font-normal text-mist">({String(calledPhraseList.length)})</span>
+              </h2>
+              {calledPhraseList.length > 0 ? (
+                <div className="max-h-72 overflow-y-auto rounded-md border border-rule bg-panel">
                   {calledPhraseList.map((cp) => (
                     <CalledPhraseItem
                       key={cp.phrase}
@@ -239,8 +234,12 @@ export function BoardView({
                     />
                   ))}
                 </div>
-              </div>
-            )}
+              ) : (
+                <p className="text-sm text-mist">
+                  Nothing called yet. Tap a phrase above when it happens.
+                </p>
+              )}
+            </section>
           </div>
         </div>
       </div>

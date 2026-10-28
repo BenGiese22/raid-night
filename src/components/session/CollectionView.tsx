@@ -103,71 +103,79 @@ export function CollectionView({
   }
 
   return (
-    <div className="space-y-6">
-      {/* Session code display */}
-      <div className="text-center">
-        <p className="text-sm text-gray-400">Session Code</p>
-        <p className="text-2xl font-bold tracking-wider text-indigo-300">{sessionCode}</p>
+    <div className="space-y-8">
+      <div>
+        <p className="text-sm text-mist">Share this code or the page link</p>
+        <p className="display mt-1 break-all text-5xl text-hl sm:text-6xl">{sessionCode}</p>
       </div>
 
-      {/* Phrase input */}
       <form
         onSubmit={(e) => {
           void handleSubmit(e)
         }}
-        className="flex gap-2"
+        className="space-y-2"
       >
-        <label htmlFor="phrase-input" className="sr-only">
-          Enter a bingo phrase
+        <label htmlFor="phrase-input" className="block font-semibold">
+          Add something that will happen tonight
         </label>
-        <input
-          id="phrase-input"
-          type="text"
-          value={inputValue}
-          onChange={(e) => {
-            setInputValue(e.target.value)
-          }}
-          placeholder="Enter a phrase..."
-          maxLength={200}
-          className="flex-1 rounded-lg border border-gray-700 bg-gray-900 px-4 py-2 text-gray-100 placeholder-gray-500 focus:border-indigo-500 focus:outline-none"
-        />
-        <button
-          type="submit"
-          disabled={isSubmitting || !inputValue.trim()}
-          className="rounded-lg bg-indigo-600 px-4 py-2 font-medium transition hover:bg-indigo-500 disabled:opacity-50"
-        >
-          Submit
-        </button>
+        <div className="flex gap-2">
+          <input
+            id="phrase-input"
+            type="text"
+            value={inputValue}
+            onChange={(e) => {
+              setInputValue(e.target.value)
+            }}
+            placeholder="Tank pulls before the buffs"
+            maxLength={200}
+            autoComplete="off"
+            className="field flex-1"
+          />
+          <button
+            type="submit"
+            disabled={isSubmitting || !inputValue.trim()}
+            className="btn-primary"
+          >
+            Add phrase
+          </button>
+        </div>
       </form>
 
-      {/* Phrase display: open vs blind */}
       {visibility === SubmissionVisibility.Open ? (
         <div>
-          <p className="mb-2 text-sm text-gray-400">{String(phraseCount)} phrases submitted</p>
-          {phrases.length > 0 && (
-            <ul className="max-h-60 space-y-1 overflow-y-auto rounded-lg border border-gray-700 bg-gray-900 p-3">
+          <h2 className="mb-2 font-semibold">
+            Phrases so far <span className="font-normal text-mist">({String(phraseCount)})</span>
+          </h2>
+          {phrases.length > 0 ? (
+            <ul className="max-h-72 overflow-y-auto rounded-md border border-rule bg-panel">
               {phrases.map((phrase) => (
-                <li key={phrase} className="text-sm text-gray-300">
+                <li
+                  key={phrase}
+                  className="border-b border-rule/50 px-3 py-2 text-sm last:border-b-0"
+                >
                   {phrase}
                 </li>
               ))}
             </ul>
+          ) : (
+            <p className="text-sm text-mist">Nothing yet. Add the first phrase above.</p>
           )}
         </div>
       ) : (
-        <div className="rounded-lg border border-gray-700 bg-gray-900 p-4 text-center">
-          <p className="text-lg font-medium text-gray-300">
-            {String(phraseCount)} phrases submitted
+        <div className="rounded-md border border-rule bg-panel p-4">
+          <p className="display text-4xl">{String(phraseCount)}</p>
+          <p className="mt-1 text-sm text-mist">
+            phrases added. They stay hidden until the session locks.
           </p>
-          <p className="text-xs text-gray-500">Phrases will be revealed when the session locks</p>
         </div>
       )}
 
-      {/* Lock controls */}
-      {scheduledLockAt && (
-        <LockCountdown scheduledLockAt={scheduledLockAt} sessionCode={sessionCode} />
-      )}
-      <LockButton sessionCode={sessionCode} phraseCount={phraseCount} />
+      <div className="space-y-3 border-t border-rule pt-6">
+        {scheduledLockAt && (
+          <LockCountdown scheduledLockAt={scheduledLockAt} sessionCode={sessionCode} />
+        )}
+        <LockButton sessionCode={sessionCode} phraseCount={phraseCount} />
+      </div>
     </div>
   )
 }
