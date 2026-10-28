@@ -1,167 +1,194 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
+
+import {
+  LOCK_WINDOW_DAYS,
+  dateFromParts,
+  dateStringForOffset,
+  dayLabel,
+  describeLockTime,
+  midnightPositions,
+  partsForClock,
+  partsForDay,
+  partsFromDate,
+  partsFromNowPlus,
+  toDateTimeLocal,
+  validateLockTime,
+  windowPosition,
+} from '@/lib/schedule'
+import type { ClockParts, LockTimeParts } from '@/lib/schedule'
+import { Period } from '@/types/enums'
 
 interface DateTimePickerProps {
-  /** ISO datetime-local string (YYYY-MM-DDTHH:MM) or empty string */
+  /** Initial datetime-local string (YYYY-MM-DDTHH:MM), or empty string for no schedule */
   readonly value: string
-  /** Called with ISO datetime-local string or empty string on clear */
+  /** Called with a valid datetime-local string, or empty string when unset or invalid */
   readonly onChange: (value: string) => void
+  /** Called with true while the chosen time is invalid, so the form can block submit */
+  readonly onValidityChange?: (hasError: boolean) => void
+}
+
+interface QuickPick {
+  readonly hours: number
+  readonly label: string
 }
 
 const HOURS = Array.from({ length: 12 }, (_, i) => i + 1)
-const MINUTES = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55]
-const MIN_LOCK_DELAY_MS = 5 * 60 * 1000 // 5 minutes
-const MAX_LOCK_DELAY_MS = 24 * 60 * 60 * 1000 // 24 hours
+const MINUTES = Array.from({ length: 12 }, (_, i) => i * 5)
+const DAY_OFFSETS = Array.from({ length: LOCK_WINDOW_DAYS }, (_, i) => i)
+const QUICK_PICKS: readonly QuickPick[] = [
+  { hours: 1, label: 'In 1 hour' },
+  { hours: 2, label: 'In 2 hours' },
+  { hours: 4, label: 'In 4 hours' },
+  { hours: 24, label: 'In 1 day' },
+]
+const TICK_MS = 30_000
+const DEFAULT_CLOCK: ClockParts = { hour: 8, minute: 0, period: Period.PM }
 
 function pad(n: number): string {
   return String(n).padStart(2, '0')
 }
 
-function todayDateString(): string {
-  const now = new Date()
-  return `${String(now.getFullYear())}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`
-}
-
-function tomorrowDateString(): string {
-  const tomorrow = new Date()
-  tomorrow.setDate(tomorrow.getDate() + 1)
-  return `${String(tomorrow.getFullYear())}-${pad(tomorrow.getMonth() + 1)}-${pad(tomorrow.getDate())}`
-}
-
-function parseDateTimeLocal(value: string): {
-  date: string
-  hour: number
-  minute: number
-  period: 'AM' | 'PM'
-} | null {
+function initialParts(value: string): LockTimeParts | null {
   if (!value) return null
-  const [datePart, timePart] = value.split('T')
-  if (!datePart || !timePart) return null
-  const [h, m] = timePart.split(':').map(Number)
-  if (h === undefined || m === undefined || isNaN(h) || isNaN(m)) return null
-
-  const period: 'AM' | 'PM' = h >= 12 ? 'PM' : 'AM'
-  const hour12 = h === 0 ? 12 : h > 12 ? h - 12 : h
-
-  return { date: datePart, hour: hour12, minute: m, period }
-}
-
-function toDateTimeLocal(date: string, hour: number, minute: number, period: 'AM' | 'PM'): string {
-  let h24 = hour === 12 ? 0 : hour
-  if (period === 'PM') h24 += 12
-  return `${date}T${pad(h24)}:${pad(minute)}`
-}
-
-function validateLockTime(datetimeLocal: string): string | null {
-  if (!datetimeLocal) return null
-  const selected = new Date(datetimeLocal)
-  if (isNaN(selected.getTime())) return null
-
-  const delayMs = selected.getTime() - Date.now()
-
-  if (delayMs < MIN_LOCK_DELAY_MS) {
-    return 'Must be at least 5 minutes from now'
-  }
-  if (delayMs > MAX_LOCK_DELAY_MS) {
-    return 'Must be within 24 hours'
-  }
-  return null
+  const date = new Date(value)
+  return isNaN(date.getTime()) ? null : partsFromDate(date)
 }
 
 /**
- * Custom date and time picker with separate date input, hour/minute/AM-PM selectors,
- * and quick-select buttons for "Today" and "Tomorrow".
- * Validates that the selected time is 5 minutes to 24 hours from now.
+ * Schedule picker for the session's auto-lock time, up to 7 days ahead.
+ * Day chips snap the time into the valid window (5 minutes to 7 days from now),
+ * quick picks cover "in an hour or a day", and a summary plus a 7-day timeline show
+ * when boards will deal. Invalid times are explained inline and block submission.
  */
-export function DateTimePicker({ value, onChange }: DateTimePickerProps) {
-  const parsed = parseDateTimeLocal(value)
+export function DateTimePicker({ value, onChange, onValidityChange }: DateTimePickerProps) {
+  const [now, setNow] = useState(() => new Date())
+  const [timeZone, setTimeZone] = useState('')
 
-  const [date, setDate] = useState(parsed?.date ?? '')
-  const [hour, setHour] = useState(parsed?.hour ?? 8)
-  const [minute, setMinute] = useState(parsed?.minute ?? 0)
-  const [period, setPeriod] = useState<'AM' | 'PM'>(parsed?.period ?? 'PM')
+  const initial = initialParts(value)
+  const [date, setDate] = useState(initial?.date ?? '')
+  const [clock, setClock] = useState(
+    initial
+      ? { hour: initial.hour, minute: initial.minute, period: initial.period }
+      : DEFAULT_CLOCK,
+  )
 
-  const currentValue = date ? toDateTimeLocal(date, hour, minute, period) : ''
-  const validationError = useMemo(() => validateLockTime(currentValue), [currentValue])
-
-  // Sync outward when any field changes — only emit valid values
+  // Re-evaluate every 30 seconds so a time that was fine a moment ago can't go stale unnoticed
   useEffect(() => {
-    if (date) {
-      const dtLocal = toDateTimeLocal(date, hour, minute, period)
-      const error = validateLockTime(dtLocal)
-      onChange(error ? '' : dtLocal)
+    setTimeZone(Intl.DateTimeFormat().resolvedOptions().timeZone)
+    const interval = setInterval(() => {
+      setNow(new Date())
+    }, TICK_MS)
+    return () => {
+      clearInterval(interval)
     }
-  }, [date, hour, minute, period]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [])
 
-  function handleClear() {
-    setDate('')
-    onChange('')
+  const parts: LockTimeParts | null = date ? { date, ...clock } : null
+  const dateTimeLocal = parts ? toDateTimeLocal(parts) : ''
+  const error = validateLockTime(dateTimeLocal, now)
+  const selected = parts ? dateFromParts(parts) : null
+
+  useEffect(() => {
+    onChange(error ? '' : dateTimeLocal)
+    onValidityChange?.(error !== null)
+  }, [dateTimeLocal, error]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  function apply(next: LockTimeParts, at: Date) {
+    setNow(at)
+    setDate(next.date)
+    setClock({ hour: next.hour, minute: next.minute, period: next.period })
   }
 
-  // Max date: tomorrow (24-hour constraint)
-  const maxDate = tomorrowDateString()
-  const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone
+  function chooseDay(offset: number) {
+    const at = new Date()
+    const next = partsForDay(offset, clock, at)
+    if (next) apply(next, at)
+  }
+
+  function chooseQuickPick(hours: number) {
+    const at = new Date()
+    apply(partsFromNowPlus(hours, at), at)
+  }
+
+  function changeClock(patch: Partial<ClockParts>) {
+    const at = new Date()
+    const current = DAY_OFFSETS.find((offset) => dateStringForOffset(offset, at) === date)
+    apply(partsForClock({ ...clock, ...patch }, at, current ?? 0), at)
+  }
+
+  const position = selected ? windowPosition(selected, now) : 0
+  const ticks = midnightPositions(now)
+  const chip =
+    'rounded-md border border-rule bg-night px-3 py-1.5 text-sm text-bone transition hover:border-mist'
+  const select = 'rounded-md border border-rule bg-night px-3 py-2 text-sm text-bone'
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <span className="text-sm font-semibold text-bone">Deal boards automatically at</span>
-        {(date || value) && (
-          <button type="button" onClick={handleClear} className="text-xs text-mist hover:text-bone">
-            Clear
+        <span className="text-sm font-semibold">When is your raid?</span>
+        {date && (
+          <button
+            type="button"
+            onClick={() => {
+              setDate('')
+            }}
+            className="text-xs text-mist underline underline-offset-4 hover:text-bone"
+          >
+            Don&apos;t auto-deal
           </button>
         )}
       </div>
 
-      {/* Date row: input + quick selects */}
-      <div className="flex items-center gap-2">
-        <input
-          type="date"
-          value={date}
-          min={todayDateString()}
-          max={maxDate}
-          onChange={(e) => {
-            setDate(e.target.value)
-          }}
-          className="flex-1 rounded-md border border-rule bg-night px-3 py-2 text-sm text-bone"
-        />
-        <button
-          type="button"
-          onClick={() => {
-            setDate(todayDateString())
-          }}
-          className={`rounded-md border px-3 py-2 text-xs transition ${
-            date === todayDateString()
-              ? 'border-hl bg-hl text-hl-ink'
-              : 'border-rule bg-night text-mist hover:border-mist'
-          }`}
-        >
-          Today
-        </button>
-        <button
-          type="button"
-          onClick={() => {
-            setDate(tomorrowDateString())
-          }}
-          className={`rounded-md border px-3 py-2 text-xs transition ${
-            date === tomorrowDateString()
-              ? 'border-hl bg-hl text-hl-ink'
-              : 'border-rule bg-night text-mist hover:border-mist'
-          }`}
-        >
-          Tomorrow
-        </button>
+      <div role="group" aria-label="Quick picks" className="flex flex-wrap gap-2">
+        {QUICK_PICKS.map(({ hours, label }) => (
+          <button
+            key={hours}
+            type="button"
+            onClick={() => {
+              chooseQuickPick(hours)
+            }}
+            className={chip}
+          >
+            {label}
+          </button>
+        ))}
       </div>
 
-      {/* Time row: hour / minute / AM-PM */}
+      <div role="group" aria-label="Day" className="grid grid-cols-4 gap-2">
+        {DAY_OFFSETS.map((offset) => {
+          const dayDate = dateStringForOffset(offset, now)
+          const available = partsForDay(offset, clock, now) !== null
+          return (
+            <button
+              key={offset}
+              type="button"
+              disabled={!available}
+              aria-pressed={date === dayDate}
+              title={available ? undefined : 'No times left today. Pick another day.'}
+              onClick={() => {
+                chooseDay(offset)
+              }}
+              className={`rounded-md border px-2 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-40 ${
+                date === dayDate
+                  ? 'border-hl bg-hl text-hl-ink'
+                  : 'border-rule bg-night hover:border-mist'
+              }`}
+            >
+              {dayLabel(offset, now)}
+            </button>
+          )
+        })}
+      </div>
+
       <div className="flex items-center gap-2">
         <select
-          value={hour}
+          value={clock.hour}
           onChange={(e) => {
-            setHour(Number(e.target.value))
+            changeClock({ hour: Number(e.target.value) })
           }}
-          className="rounded-md border border-rule bg-night px-3 py-2 text-sm text-bone"
+          className={select}
           aria-label="Hour"
         >
           {HOURS.map((h) => (
@@ -172,11 +199,11 @@ export function DateTimePicker({ value, onChange }: DateTimePickerProps) {
         </select>
         <span className="text-mist">:</span>
         <select
-          value={minute}
+          value={clock.minute}
           onChange={(e) => {
-            setMinute(Number(e.target.value))
+            changeClock({ minute: Number(e.target.value) })
           }}
-          className="rounded-md border border-rule bg-night px-3 py-2 text-sm text-bone"
+          className={select}
           aria-label="Minute"
         >
           {MINUTES.map((m) => (
@@ -186,35 +213,74 @@ export function DateTimePicker({ value, onChange }: DateTimePickerProps) {
           ))}
         </select>
         <div className="flex overflow-hidden rounded-md border border-rule">
-          <button
-            type="button"
-            onClick={() => {
-              setPeriod('AM')
-            }}
-            className={`px-3 py-2 text-xs font-medium transition ${
-              period === 'AM' ? 'bg-hl text-hl-ink' : 'bg-night text-mist hover:text-bone'
-            }`}
-          >
-            AM
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setPeriod('PM')
-            }}
-            className={`px-3 py-2 text-xs font-medium transition ${
-              period === 'PM' ? 'bg-hl text-hl-ink' : 'bg-night text-mist hover:text-bone'
-            }`}
-          >
-            PM
-          </button>
+          {[Period.AM, Period.PM].map((period) => (
+            <button
+              key={period}
+              type="button"
+              aria-pressed={clock.period === period}
+              onClick={() => {
+                changeClock({ period })
+              }}
+              className={`px-3 py-2 text-sm font-semibold transition ${
+                clock.period === period ? 'bg-hl text-hl-ink' : 'bg-night text-mist hover:text-bone'
+              }`}
+            >
+              {period}
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* Validation feedback */}
-      {date && validationError && <p className="text-xs text-hl">{validationError}</p>}
+      {/* Summary and timeline: shows where the raid falls in the schedulable week */}
+      <div
+        className={`rounded-md border-l-4 bg-panel px-3 py-3 ${
+          error ? 'border-flare' : selected ? 'border-hl' : 'border-rule'
+        }`}
+      >
+        {error ? (
+          <p role="alert" className="text-sm font-semibold text-flare">
+            {error}
+          </p>
+        ) : selected ? (
+          <p className="text-sm">
+            Boards deal <span className="font-semibold">{describeLockTime(selected, now)}</span>
+          </p>
+        ) : (
+          <p className="text-sm text-mist">
+            No auto-deal. Lock and deal boards yourself once everyone has added phrases.
+          </p>
+        )}
 
-      <p className="text-xs text-mist">Timezone: {userTimezone}</p>
+        {selected && (
+          <div aria-hidden="true" className="mt-3">
+            <div className="relative h-1.5 rounded-full bg-rule/60">
+              <div
+                className={`absolute inset-y-0 left-0 rounded-full ${error ? 'bg-flare' : 'bg-hl'}`}
+                style={{ width: `${String(position * 100)}%` }}
+              />
+              {ticks.map((tick) => (
+                <div
+                  key={tick}
+                  className="absolute -top-0.5 h-2.5 w-px bg-night"
+                  style={{ left: `${String(tick * 100)}%` }}
+                />
+              ))}
+              <div
+                className={`absolute top-1/2 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-panel ${
+                  error ? 'bg-flare' : 'bg-hl'
+                }`}
+                style={{ left: `${String(position * 100)}%` }}
+              />
+            </div>
+            <div className="mt-1.5 flex justify-between text-xs text-mist">
+              <span>now</span>
+              <span>in {String(LOCK_WINDOW_DAYS)} days</span>
+            </div>
+          </div>
+        )}
+
+        {timeZone && <p className="mt-2 text-xs text-mist">Times are in {timeZone}.</p>}
+      </div>
     </div>
   )
 }

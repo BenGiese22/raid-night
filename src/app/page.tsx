@@ -50,6 +50,7 @@ const SAMPLE_MARKED: ReadonlySet<number> = new Set([2, 6, 10, 11, 12, 13, 14, 20
 export default function HomePage() {
   const [visibility, setVisibility] = useState(SubmissionVisibility.Open)
   const [scheduledLockAt, setScheduledLockAt] = useState('')
+  const [scheduleInvalid, setScheduleInvalid] = useState(false)
   const [freeSpace, setFreeSpace] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -58,6 +59,7 @@ export default function HomePage() {
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
+    if (scheduleInvalid) return
     setIsSubmitting(true)
     setError(null)
     setResult(null)
@@ -176,7 +178,11 @@ export default function HomePage() {
               </div>
             </fieldset>
 
-            <DateTimePicker value={scheduledLockAt} onChange={setScheduledLockAt} />
+            <DateTimePicker
+              value={scheduledLockAt}
+              onChange={setScheduledLockAt}
+              onValidityChange={setScheduleInvalid}
+            />
 
             <label className="flex items-center gap-3 text-sm">
               <input
@@ -199,7 +205,11 @@ export default function HomePage() {
               </p>
             )}
 
-            <button type="submit" disabled={isSubmitting} className="btn-primary w-full py-3">
+            <button
+              type="submit"
+              disabled={isSubmitting || scheduleInvalid}
+              className="btn-primary w-full py-3"
+            >
               {isSubmitting ? 'Creating…' : 'Create session'}
             </button>
           </form>

@@ -61,3 +61,9 @@ export enum RealtimeEvent {
   BingoEvent = 'bingo_event',
   UndoEvent = 'undo_event',
 }
+
+/** AM/PM half of a 12-hour clock time */
+export enum Period {
+  AM = 'AM',
+  PM = 'PM',
+}
